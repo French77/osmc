@@ -47,18 +47,33 @@ function build_fs_image()
 		echo "disable_splash=1" >> config.txt
 	fi
 	echo -e "Creating boot tarball"
+	UNC_TS_SIZE_BOOT=$(du -h --max-depth=0 . | awk {'print $1'} | tr -d 'M')
 	tar -cf - * | xz -9 -c - > boot-${1}.tar.xz
 	mv boot-${1}.tar.xz ../../
 	rm -rf *
 	popd
 	# NOOBS modifications, i.e. future 'health' script would be in .
 	echo -e "Creating root tarball"
+	UNC_TS_SIZE_ROOT=$(du -h --max-depth=0 . | awk {'print $1'} | tr -d 'M')
 	echo "noobs" > vendor
 	tar -cf - * | xz -9 -c - > root-${1}.tar.xz
 	mv root-${1}.tar.xz ../
 	popd
+	# Set uncompressed tarball sizes
+	sed -e s/UNC_TS_SIZE_BOOT/${UNC_TS_SIZE_BOOT}/ -i partitions-pi$(echo ${1:3:4}).json
+	sed -e s/UNC_TS_SIZE_ROOT/${UNC_TS_SIZE_ROOT}/ -i partitions-pi$(echo ${1:3:4}).json
+	echo -e "Creating marketing tarball"
+	mkdir vga_slides
+	SLIDES="A B C D E"
+	for slide in $SLIDES
+	do
+	    cp assets/$slide.png vga_slides/
+	done
+	tar -cf marketing.tar vga_slides
 	rm -rf output
+	rm -rf vga_slides
 }
 echo -e "Building NOOBS filesystem image"
+make clean
 build_fs_image "$1"
 echo -e "Build completed"

@@ -86,8 +86,15 @@ function setup_busybox_links()
 		chroot ${1} ln -s /bin/busybox /bin/vi
 		chroot ${1} ln -s /bin/busybox /bin/ping
 		chroot ${1} ln -s /bin/busybox /bin/unzip
+		chroot ${1} ln -s /bin/busybox /bin/nc
+		chroot ${1} ln -s /bin/busybox /bin/traceroute
 		chroot ${1} chmod +s /bin/busybox
 	fi
+}
+
+function enable_legacy_elf()
+{
+	chroot ${1} ln -s /lib/arm-linux-gnueabihf/ld-linux.so.3 /lib/ld-linux.so.3
 }
 
 export -f setup_osmc_user
@@ -99,3 +106,4 @@ export -f enable_init
 export -f create_base_fstab
 export -f conf_tty
 export -f setup_busybox_links
+export -f enable_legacy_elf

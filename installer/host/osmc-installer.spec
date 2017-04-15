@@ -78,9 +78,9 @@ Requires:	libpng12-0
   %if 0%{?suse_version}
     %define dep_postfix -32bit
   %endif
-  %if 0%{?fedora}
-    %define dep_postfix (x86-32)
-  %endif
+%endif
+%if 0%{?fedora}
+  %define dep_postfix %{?_isa}
 %endif
 
 %if 0%{?suse_version}
@@ -175,5 +175,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Oct 12 2014 Sam G. Nazarko
+* Sun Oct 12 2014 Sam G. Nazarko
 - OBS initial release, thanks to Ivan Gonzalez (malkavi) for help

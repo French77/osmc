@@ -4,7 +4,7 @@
 #!/bin/bash
 
 . ../common.sh
-VERSION="1.30"
+VERSION="1.33"
 pull_source "https://www.kernel.org/pub/linux/network/connman/connman-${VERSION}.tar.gz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error fetching connman source" && exit 1; fi
 # Build in native environment
@@ -37,6 +37,7 @@ then
 	cp -ar src/connman-dbus-osmc.conf ${out}/etc/dbus-1/system.d/connman-dbus.conf
 	cp -ar plugins/polkit.policy ${out}/usr/share/polkit-1/actions/net.connman.policy
 	cp -ar client/connmanctl ${out}/usr/sbin/connmanctl
+	rm -rf ${out}/usr/lib/tmpfiles.d
 	popd
 	strip_files "${out}"
 	fix_arch_ctl "files/DEBIAN/control"

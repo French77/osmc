@@ -1,12 +1,16 @@
 {
 	"name": "OSMC_Pi2",
 	"url":	"https://osmc.tv",
-	"version": "2015.08",
-	"release_date": "2015-08-30",
-	"kernel": "4.1.5",
+	"version": "2017.02-1",
+	"release_date": "2017-02-09",
+	"kernel": "4.4.27",
 	"description": "A fast and feature filled open source media center",
 	"username": "osmc",
 	"password": "osmc",
-	"supported_hex_revisions": "1040,1041",
+	"supported_hex_revisions": "1040,1041,2082",
+	"supported_models": [
+            "Pi 2",
+            "Pi 3"
+         ],
 	"feature_level": 0
 }

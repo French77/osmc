@@ -21,6 +21,11 @@
 #include <QThread>
 #include "extractworker.h"
 #include <QTimer>
+//#define FACTORYV2
+#ifdef FACTORYV2
+    #include <unistd.h>
+    #include <sys/reboot.h>
+#endif
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -83,8 +88,10 @@ void MainWindow::install()
     if (! hasMount && utils->getOSMCDev() == "atv")
     {
         /* Super hacky for Apple TV 1st gen. Sometimes no internal disk */
-        hasMount = utils->mountPartition(device, "/dev/sda1");
+        device->setBoot("/dev/sda1");
+        hasMount = utils->mountPartition(device, MNT_BOOT);
         device->setRoot("/dev/sda2");
+        device->setBootNeedsFormat(false);
     }
     if (! hasMount)
     {
@@ -170,19 +177,89 @@ void MainWindow::install()
     {
         logger->addLine("No preseed file was found");
     }
+#ifndef FACTORYV2
+    if (utils->getOSMCDev() == "vero3")
+    {
+        /* Check for correct flash */
+        if (! utils->v4k_checkflash())
+        {
+            logger->addLine("Flash does not seem correct");
+            haltInstall("Please contact support. Hardware is faulty");
+            return ;
+        }
+        else
+        {
+            logger->addLine("Flash looks OK");
+        }
+    }
+    if (utils->getOSMCDev() == "vero2" || utils->getOSMCDev() == "vero3")
+    {
+        for (int i = 0; i <= 60; i++)
+        {
+            ui->statusLabel->setText(tr("You have ") + " " + QString::number(60 - i) + " " + ("seconds to unpower before the device is formatted"));
+            qApp->processEvents();
+            system("/bin/sleep 1");
+        }
+    }
+#endif
+#ifdef FACTORYV2
+    if (! utils->v4k_checkflash())
+    {
+        system("/usr/sbin/fw_setenv upgrade_step 2");
+        QFile dtbFile(QString(MNT_BOOT) + "/dtb.img");
+        if (! dtbFile.exists())
+            haltInstall("No DTB for upload");
+
+    QString ddCmd = "dd if=" + QString(MNT_BOOT) + "/dtb.img" + " of=/dev/dtb bs=256k conv=sync";
+    system(ddCmd.toLocal8Bit().data());
+    system("dd if=/dev/zero of=/dev/data bs=1M count=1 conv=fsync");
+    system("dd if=/dev/zero of=/dev/instaboot bs=1M count=1 conv=fsync");
+    system("dd if=/dev/zero of=/dev/system bs=1M count=1 conv=fsync");
+    system("dd if=/dev/zero of=/dev/cache bs=1M count=1 conv=fsync");
+    system("dd if=/dev/zero of=/dev/tee bs=256k conv=fsync"); /* Quirk */
+    utils->v4k_setflash();
+    system("/bin/sync");
+    utils->rebootSystem();
+    }
+#endif
     /* If !nfs, create necessary partitions */
     if (! useNFS)
     {
         logger->addLine("Creating root partition");
         ui->statusLabel->setText(tr("Formatting device"));
         qApp->processEvents(); /* Force GUI update */
+        if (utils->getOSMCDev() == "vero2" && ! device->hasBootChanged())
+        {
+            /* Set up LVM */
+            system("dd if=/dev/zero of=/dev/data bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/misc bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/system bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/cache bs=1M count=1 conv=fsync");
+            system("pvcreate /dev/data /dev/system /dev/cache /dev/misc");
+            system("vgcreate vero-nand /dev/data /dev/system /dev/cache /dev/misc");
+            system("lvcreate -n root -l100%FREE vero-nand");
+            utils->fmtpart(device->getRoot(), "ext4");
+        }
+        if (utils->getOSMCDev() == "vero3" && ! device->hasBootChanged())
+        {
+            /* Set up LVM */
+            system("dd if=/dev/zero of=/dev/data bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/instaboot bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/system bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/cache bs=1M count=1 conv=fsync");
+            system("dd if=/dev/zero of=/dev/tee bs=256k conv=fsync"); /* Quirk */
+            system("pvcreate /dev/data /dev/system /dev/cache /dev/instaboot");
+            system("vgcreate vero-nand /dev/data /dev/system /dev/cache /dev/instaboot");
+            system("lvcreate -n root -l100%FREE vero-nand");
+            utils->fmtpart(device->getRoot(), "ext4");
+        }
         QString rootBase = device->getRoot();
         if (rootBase.contains("mmcblk"))
             rootBase.chop(2);
         else
             rootBase.chop(1);
         logger->addLine("From a root partition of " + device->getRoot() + ", I have deduced a base device of " + rootBase);
-        if (device->hasRootChanged() && utils->getOSMCDev() != "atv")
+        if (device->hasRootChanged() && utils->getOSMCDev() != "atv") // && utils.getOSMCDev() != "pc" eventually.. -- cause we want boot there too.
         {
             logger->addLine("Must mklabel as root fs is on another device");
             utils->mklabel(rootBase, false);
@@ -191,16 +268,19 @@ void MainWindow::install()
         }
         else
         {
-            int size = utils->getPartSize(rootBase, (device->getBootFS() == "vfat" ? "fat32" : "ext4"));
-            if (size == -1)
+            if (! device->doesBootNeedsFormat() && utils->getOSMCDev() != "vero2" && utils->getOSMCDev() != "vero3")
             {
-                logger->addLine("Issue getting size of device");
-                haltInstall(tr("cannot work out partition size"));
-                return;
+                int size = utils->getPartSize(rootBase, device->getBootFS());
+                if (size == -1)
+                {
+                    logger->addLine("Issue getting size of device");
+                    haltInstall(tr("cannot work out partition size"));
+                    return;
+                }
+                logger->addLine("Determined " + QString::number(size) + " MB as end of first partition");
+                utils->mkpart(rootBase, "ext4", QString::number(size + 2) + "M", "100%");
+                utils->fmtpart(device->getRoot(), "ext4");
             }
-            logger->addLine("Determined " + QString::number(size) + " MB as end of first partition");
-            utils->mkpart(rootBase, "ext4", QString::number(size + 2) + "M", "100%");
-            utils->fmtpart(device->getRoot(), "ext4");
         }
     }
     /* Mount root filesystem */
@@ -244,6 +324,12 @@ void MainWindow::setupBootLoader()
     val += 25;
     /* Set up the boot loader */
     ui->statusLabel->setText(tr("Configuring bootloader"));
+    if (device->hasBootChanged())
+    {
+        logger->addLine("Boot changed. Re-mounting the real /boot");
+        utils->unmountPartition(device, MNT_BOOT);
+        utils->mountPartition(device, MNT_BOOT);
+    }
     logger->addLine("Configuring bootloader: moving /boot to appropriate boot partition");
     bc->copyBootFiles();
     QTimer::singleShot(0, this, SLOT(val));
@@ -260,11 +346,20 @@ void MainWindow::setupBootLoader()
     logger->addLine("Successful installation. Dumping log and rebooting system");
     dumpLog();
     QTimer::singleShot(0, this, SLOT(val));
-
     /* Reboot */
+    /* Unmount. May not alway succeed but limits chance of journal recovery */
+    utils->unmountPartition(device, MNT_BOOT);
+    utils->unmountPartition(device, MNT_ROOT);
+#ifdef FACTORYV2
+        system("/bin/sync");
+        ui->statusLabel->setText(tr("OSMC installed successfully"));
+        qApp->processEvents(); /* Force GUI update */
+        reboot(0x4321fedc);
+#else
     ui->statusLabel->setText(tr("OSMC installed successfully"));
     qApp->processEvents(); /* Force GUI update */
     utils->rebootSystem();
+#endif
 }
 
 void MainWindow::haltInstall(QString errorMsg)

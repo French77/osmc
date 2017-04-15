@@ -37,9 +37,6 @@ SOURCES += main.cpp\
 macx {
 SOURCES += \
     io_osx.cpp
-
-CONFIG += \
-    c++11
 }
 
 unix:!macx {
@@ -94,7 +91,7 @@ FORMS    += mainwindow.ui \
     extractprogress.ui \
     successdialog.ui
 
-VERSION = 116
+VERSION = 127
 
 TRANSLATIONS = osmc.ts \
     osmc_da.ts \

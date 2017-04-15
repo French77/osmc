@@ -177,4 +177,10 @@ msgctxt "#32041"
 msgid "Kernel Message Log (dmesg)"
 msgstr ""
 
+msgctxt "#32042"
+msgid "Display Info"
+msgstr ""
 
+msgctxt "#32043"
+msgid "Network Interface Configuration"
+msgstr ""

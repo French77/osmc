@@ -7,6 +7,9 @@
 #include <cstdlib>
 #include "network.h"
 #include <QStringList>
+#include <QTextStream>
+#include <QDirIterator>
+//#define FACTORYV2
 
 BootloaderConfig::BootloaderConfig(Target *device, Network *network, Utils *utils, Logger *logger, PreseedParser *preseed)
 {
@@ -19,21 +22,84 @@ BootloaderConfig::BootloaderConfig(Target *device, Network *network, Utils *util
 
 void BootloaderConfig::copyBootFiles()
 {
+    if (utils->getOSMCDev() == "atv")
+    {
+        system("mv /mnt/boot/BootLogo.png /tmp/BootLogo.png");
+        system("mv /mnt/boot/boot.efi /tmp/boot.efi");
+        system("mv /mnt/boot/System /tmp/System");
+    }
     system("mv /mnt/boot/preseed.cfg /tmp/preseed.cfg");
+#ifndef FACTORYV2
     system("rm -rf /mnt/boot/*"); /* Trash existing files */
+#endif
     system("mv /tmp/preseed.cfg /mnt/boot/preseed.cfg");
-    system("mv /mnt/root/boot/* /mnt/boot");
+    if (utils->getOSMCDev() != "vero2" && utils->getOSMCDev() != "vero3")
+         system("mv /mnt/root/boot/* /mnt/boot");
+    if (utils->getOSMCDev() == "atv")
+    {
+        system("mv /tmp/BootLogo.png /mnt/boot/BootLogo.png");
+        system("mv /tmp/boot.efi /mnt/boot/boot.efi");
+        system("mv /tmp/System /mnt/boot");
+    }
+    if (utils->getOSMCDev() == "vero2" || utils->getOSMCDev() == "vero3")
+    {
+        /* We don't have an exact name for the kernel image */
+        QDirIterator it ("/mnt/root/boot", QStringList() << "kernel*.img", QDir::Files);
+        QString kernelName;
+        while (it.hasNext())
+        {
+            kernelName = it.next();
+            break;
+        }
+        if (! kernelName.isEmpty())
+        {
+            QString ddCmd = "dd if=" + kernelName + " of=/dev/boot bs=1M conv=fsync";
+            system(ddCmd.toLocal8Bit().data());
+        }
+        system("dd if=/mnt/root/boot/splash of=/dev/logo bs=1M conv=fsync"); /* Custom early splash */
+    }
+    if (utils->getOSMCDev() == "vero3")
+    {
+        /* Upload the device tree */
+        /* We don't have an exact name for the DTB image */
+        QDirIterator it ("/mnt/root/boot", QStringList() << "dtb*.img", QDir::Files);
+        QString dtbName;
+        while (it.hasNext())
+        {
+            dtbName = it.next();
+            break;
+        }
+        if (! dtbName.isEmpty())
+        {
+            /* Ensure we have permission to write it out */
+            system("/usr/sbin/fw_setenv upgrade_step 2");
+            QString ddCmd = "dd if=" + dtbName + " of=/dev/dtb bs=256k conv=sync";
+            system(ddCmd.toLocal8Bit().data());
+        }
+    }
 }
 
 void BootloaderConfig::configureMounts()
 {
     QFile fstabFile("/mnt/root/etc/fstab");
     QStringList fstabStringList;
-    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2" || utils->getOSMCDev() == "vero1")
+    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2" || utils->getOSMCDev() == "vero1" || utils->getOSMCDev() == "atv" || utils->getOSMCDev() == "vero2" || utils->getOSMCDev() == "vero3")
     {
-        fstabStringList.append(device->getBoot() + "  /boot" + "    " + device->getBootFS() + "     defaults,noatime    0   0\n");
-        if (! device->getRoot().contains(":/"))
-            fstabStringList.append(device->getRoot() + "  /" + "    " + "ext4" + "      defaults,noatime    0   0\n" );
+        QString bootFS = device->getBootFS();
+        if (bootFS == "fat32") { bootFS = "vfat"; }
+        if (utils->getOSMCDev() != "vero2" && utils->getOSMCDev() != "vero3")
+            fstabStringList.append(device->getBoot() + "  /boot" + "    " + bootFS + "     defaults,noatime,noauto,x-systemd.automount    0   0\n");
+        if (! device->getRoot().contains(":/")) {
+            if (utils->getOSMCDev() != "atv")
+            {
+                fstabStringList.append("# rootfs is not mounted in fstab as we do it via initramfs. Uncomment for remount (slower boot)");
+                fstabStringList.append("#" + device->getRoot() + "  /" + "    " + "ext4" + "      defaults,noatime    0   0\n" );
+            }
+            else
+            {
+                fstabStringList.append(device->getRoot() + "  /" + "    " + "ext4" + "      defaults,noatime    0   0\n" );
+            }
+        }
         else
             /* NFS install */
             fstabStringList.append("/dev/nfs   /      auto       defaults,noatime    0   0\n");
@@ -63,7 +129,39 @@ void BootloaderConfig::configureEnvironment()
         QStringList configStringList;
         if (utils->getOSMCDev() == "rbp1")
         {
-            configStringList << "arm_freq=850\n" << "core_freq=375\n" << "gpu_mem_256=112\n" << "gpu_mem_512=144\n" << "hdmi_ignore_cec_init=1\n" << "disable_overscan=1\n" << "start_x=1\n" << "dtoverlay=lirc-rpi:gpio_out_pin=17,gpio_in_pin=18\n" << "disable_splash=1\n";
+            QFile cpuinfo("/proc/cpuinfo");
+            int rev = 0x0000;
+            if (cpuinfo.open(QIODevice::ReadOnly))
+            {
+                QTextStream in(&cpuinfo);
+                while (!in.atEnd())
+                {
+                    QString line = in.readLine();
+                    if (line.contains("Revision"))
+                    {
+                        logger->addLine("Found device revision. It is " + line);
+                        line.replace(" ", "");
+                        QStringList lines = line.split(":");
+                        rev = lines[1].toUInt(NULL, 16);
+                        break;
+                    }
+
+                }
+                cpuinfo.close();
+            }
+            logger->addLine("The revision for this device is " + rev);
+            if ((rev >> 23) & 1)
+            {
+                if ((rev >> 4 & 0xFF) != 9)
+                       /* Not a Pi Zero */
+                       configStringList << "arm_freq=850\n" << "core_freq=375\n";
+            }
+            else
+            {
+                /* Not a Pi Zero */
+                configStringList << "arm_freq=850\n" << "core_freq=375\n";
+            }
+            configStringList << "gpu_mem_256=112\n" << "gpu_mem_512=144\n" << "hdmi_ignore_cec_init=1\n" << "disable_overscan=1\n" << "start_x=1\n" << "disable_splash=1\n";
             cmdlineStringList << "osmcdev=rbp1";
         }
         if (utils->getOSMCDev() == "rbp2")
@@ -72,9 +170,16 @@ void BootloaderConfig::configureEnvironment()
             cmdlineStringList << "osmcdev=rbp2";
         }
         if (preseed->getBoolValue("vendor/dtoverlay"))
-            configStringList << "dtoverlay=" << preseed->getStringValue("vendor/dtoverlayparam") << "\n";
+            if (preseed->getBoolValue("vendor/dtoverlay")) {
+                QStringList dtOverlayList = preseed->getStringValue("vendor/dtoverlayparam").split("?");
+                for (int i = 0; i < dtOverlayList.count(); i++) {
+                    configStringList << "dtoverlay=" << dtOverlayList.at(i) << "\n";
+                }
+            }
         else
             configStringList << "dtoverlay=lirc-rpi:gpio_out_pin=17,gpio_in_pin=18\n";
+        if (preseed->getBoolValue("alsaoff"))
+                configStringList << "dtparam=audio=off\n";
         utils->writeToFile(configFile, configStringList, false);
         utils->writeToFile(cmdlineFile, cmdlineStringList, false);
         configFile.close();
@@ -102,10 +207,23 @@ void BootloaderConfig::configureEnvironment()
     }
    if (utils->getOSMCDev() == "atv")
    {
-       QFile cmdlineFile("/mnt/boot/cmdline.txt");
-       QStringList cmdlineStringList;
-       cmdlineStringList << "console=tty1 root=" + this->device->getRoot() + "rootfstype=ext4 rootwait quiet video=vesafb intel_idle.max_cstate=1 processor.max_cstate=2 nohpet";
-       utils->writeToFile(cmdlineFile, cmdlineStringList, false);
-       cmdlineFile.close();
+       QFile bootListFile("/mnt/boot/com.apple.Boot.plist");
+       QStringList bootStringList;
+       bootListFile.close();
+       bootStringList << "<?xml version=\"1.0\" encoding=\"UTF-8\">" << "\n";
+       bootStringList << "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">" << "\n";
+       bootStringList << "<plist version=\"1.0\">" << "\n";
+       bootStringList << "<dict>" << "\n";
+       bootStringList << "      <key>Background Color</key>" << "\n";
+       bootStringList << "      <integer>0</integer>" << "\n";
+       bootStringList << "      <key>Boot Logo</key>" << "\n";
+       bootStringList << "      <string>BootLogo.png</string>" << "\n";
+       bootStringList << "      <key>Kernel Flags</key>" << "\n";
+       bootStringList << "      <string>console=tty1 root=" + this->device->getRoot() + " rootfstype=ext4 rootwait quiet video=vesafb intel_idle.max_cstate=1 processor.max_cstate=2 nohpet vga16fb.modeset=0 osmcdev=atv" << "</string>" << "\n";
+       bootStringList << "      <key>Kernel</key>" << "\n";
+       bootStringList << "      <string>mach_kernel</string>" << "\n";
+       bootStringList << "</dict>" << "\n";
+       bootStringList << "</plist>" << "\n";
+       utils->writeToFile(bootListFile, bootStringList, false);
    }
 }

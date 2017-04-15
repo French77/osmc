@@ -1,5 +1,5 @@
 all:
-	echo -e "Specify a target:\nmake rbp1\nmake rbp2\nmake vero\nmake atv"
+	@echo "Specify a target:\nmake rbp1\nmake rbp2\nmake vero\nmake atv\nmake vero2\nmake vero364"
 
 rbp1:
 	sudo bash build.sh "rbp1"
@@ -10,8 +10,17 @@ rbp2:
 vero:
 	sudo bash build.sh "vero"
 
+vero2:
+	sudo bash build.sh "vero2"
+
+vero364:
+	sudo bash build.sh "vero364"
+
 atv:
 	sudo setarch i686 bash build.sh "atv"
+
+pc:
+	sudo bash build.sh "pc"
 
 clean:
 	sudo rm -f *.deb > /dev/null 2>&1

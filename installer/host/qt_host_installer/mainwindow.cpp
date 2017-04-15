@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     spinner = new QMovie(":/assets/resources/spinner.gif");
     ui->spinnerLabel->setMovie(spinner);
     spinner->start();
-    this->mirrorURL = "http://download.osmc.tv";
+    this->mirrorURL = "http://download.osmc.tv/sync";
     utils::writeLog("Resolving a mirror");
     accessManager = new QNetworkAccessManager(this);
     connect(accessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
@@ -103,7 +103,7 @@ void MainWindow::rotateWidget(QWidget *oldWidget, QWidget *newWidget, bool enabl
 void MainWindow::replyFinished(QNetworkReply *reply)
 {
     QVariant mirrorRedirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    this->mirrorURL = mirrorRedirectUrl.toString();
+    this->mirrorURL = mirrorRedirectUrl.toString().remove("sync");
     utils::writeLog("Resolved mirror to " + this->mirrorURL);
     reply->deleteLater();
     ui->spinnerLabel->hide();
@@ -338,19 +338,23 @@ void MainWindow::translate(QString locale)
 
 void MainWindow::showSuccessDialog()
 {
+    if (! this->device.allowsPreseedingNFS() && ! this->device.allowsPreseedingUSB() && ! this->device.allowsPreseedingSD() && ! this->device.allowsPreseedingInternal() && ! this->device.allowsPreseedingPartitioning() && ! this->device.allowsPreseedingNetwork())
+    {
+        sd = new SuccessDialog(this);
+        rotateWidget(ep, sd, false);
+    }
+    else
+    {
     /* Set up preseeder first */
     utils::writeLog("Creating preseeder");
     Preseeder *ps = new Preseeder();
-    if (this->device.allowsPreseedingNFS() || this->device.allowsPreseedingUSB() || this->device.allowsPreseedingSD() || this->device.allowsPreseedingInternal() || this->device.allowsPreseedingPartitioning() || this->device.allowsPreseedingNetwork())
-    {
-        if (!this->localeName.isEmpty())
+      if (!this->localeName.isEmpty())
             ps->setLanguageString(this->localeName);
-        ps->setTargetSettings(this);
-        if (this->device.allowsPreseedingNetwork())
-        {
-            ps->setNetworkSettings(nss);
-        }
-    }
+      ps->setTargetSettings(this);
+      if (this->device.allowsPreseedingNetwork())
+      {
+         ps->setNetworkSettings(nss);
+      }
     QStringList preseedList = ps->getPreseed();
 
     /* Write to the target */
@@ -445,6 +449,7 @@ void MainWindow::showSuccessDialog()
 #endif
     sd = new SuccessDialog(this);
     rotateWidget(ep, sd, false);
+}
 }
 
 MainWindow::~MainWindow()

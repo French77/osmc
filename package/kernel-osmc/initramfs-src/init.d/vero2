@@ -1,0 +1,55 @@
+#!/bin/busybox sh
+
+export OPTION_DO_FSCK="1"
+export OPTION_FORCE_FSCK="0"
+export OPTION_ROOT="/dev/vero-nand/root"
+export OPTION_ROOTDELAY="0"
+export OPTION_FILESYSTEM="ext4"
+export OPTION_INIT="/sbin/splash_early"
+export OPTION_MOUNT_OPTIONS=""
+export OPTION_MOUNT_PATH="/real_root"
+
+hdmimode=720p
+preferred=$(busybox grep \* /sys/class/amhdmitx/amhdmitx0/disp_cap | busybox sed 's/\*//g')
+if [ "$preferred" ]; then hdmimode="$preferred"; fi
+case $preferred in
+4k2k*)
+    hdmimode="1080p"
+    ;;
+esac
+if [ -z "$preferred" ]
+then
+    if busybox grep -w -q 1080p /sys/class/amhdmitx/amhdmitx0/disp_cap; then hdmimode="1080p"; fi
+fi
+
+# Enable framebuffer device
+echo "$hdmimode" > /sys/class/display/mode
+echo 0 > /sys/class/graphics/fb0/blank
+
+# Prevent static artefacts
+echo 1 > /sys/class/graphics/fb1/blank
+
+# Disable framebuffer scaling
+echo 0 > /sys/class/graphics/fb0/free_scale
+echo 0 > /sys/class/graphics/fb1/free_scale
+
+# Configure framebuffer with double buffer
+
+xres=$(busybox sed 's/x.*$//g' /sys/class/video/device_resolution)
+yres=$(busybox sed 's/^.*x//g' /sys/class/video/device_resolution)
+ydouble=$((yres * 2))
+
+/bin/busybox fbset -fb /dev/fb0 -g $xres $yres $xres $ydouble 32
+
+# Include deinterlacer into default VFM map
+echo rm default > /sys/class/vfm/map
+echo add default decoder ppmgr deinterlace amlvideo amvideo > /sys/class/vfm/map
+
+# Better entropy
+for part in /sys/block/*/queue/add_random; do
+echo 0 > "$part"
+done
+
+# Set up NAND
+# ToDo: only if bootfromsd
+/usr/sbin/lvchange -aly /dev/vero-nand/root --ignorelockingfailure >/dev/null 2>&1

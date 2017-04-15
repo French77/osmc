@@ -5,6 +5,14 @@
 # (c) 2014-2015 Sam Nazarko
 # email@samnazarko.co.uk
 
+loopforever()
+{
+    while true
+    do
+        sleep 1
+    done
+}
+
 # Standard busybox init
 /bin/mount -t proc proc /proc
 /bin/mount -o remount,rw,noatime /
@@ -21,11 +29,121 @@ udevadm trigger
 
 sleep 3 # Wait for /dev population
 
-/sbin/getty -L ttyAMA0 115200 vt100 & # for diagnostic purposes
+grep -q vero2 /proc/cmdline
+if [ $? == 0 ]
+then
+    hdmimode=720p
+    prefered=$(grep \* /sys/class/amhdmitx/amhdmitx0/disp_cap | sed 's/\*//g')
+    if [ "$prefered" ]; then hdmimode="$prefered"; fi
+
+    # Enable framebuffer device
+    echo "$hdmimode" > /sys/class/display/mode
+    echo 0 > /sys/class/graphics/fb0/blank
+
+    # Disable framebuffer scaling
+    echo 0 > /sys/class/graphics/fb0/free_scale
+    echo 0 > /sys/class/graphics/fb1/free_scale
+
+    # Prevent static artefacts
+    echo 1 > /sys/class/graphics/fb1/blank
+
+    # Configure framebuffer with double buffer
+
+    xres=$(sed 's/x.*$//g' /sys/class/video/device_resolution)
+    yres=$(sed 's/^.*x//g' /sys/class/video/device_resolution)
+    ydouble=$((yres * 2))
+
+    fbset -fb /dev/fb0 -g $xres $yres $xres $ydouble 32
+fi
+
+grep -q vero3 /proc/cmdline
+if [ $? == 0 ]
+then
+	hdmimode=720p60hz
+
+	for arg in $(cat /proc/cmdline)
+	do
+		 case ${arg} in
+			hdmimode=*)
+			   hdmimode=${arg#*=}
+			;;
+	esac
+	done
+
+	# Configure framebuffer X and Y size
+
+	case $hdmimode in
+	  480*)            X=720  Y=480  ;;
+	  576*)            X=720  Y=576  ;;
+	  720p*)           X=1280 Y=720  ;;
+	  *)               X=1920 Y=1080 ;;
+	esac
+
+	fbset -fb /dev/fb0 -g $X $Y 1920 2160 32
+	fbset -fb /dev/fb1 -g 32 32 32 32 32
+
+	echo 0 > /sys/class/graphics/fb0/free_scale
+	echo 0 > /sys/class/graphics/fb1/free_scale
+	echo 1 > /sys/class/video/disable_video
+
+	# Enable scaling for 4K output
+	case $hdmimode in
+	  4k*|smpte*|2160*)
+		echo 0 0 1919 1079 > /sys/class/graphics/fb0/free_scale_axis
+		echo 0 0 3839 2159 > /sys/class/graphics/fb0/window_axis
+		echo 1920 > /sys/class/graphics/fb0/scale_width
+		echo 1080 > /sys/class/graphics/fb0/scale_height
+		echo 0x10001 > /sys/class/graphics/fb0/free_scale
+	  ;;
+	esac
+
+	# Enable framebuffer device
+
+	echo 0 > /sys/class/graphics/fb0/blank
+
+	# Prevent static artefacts
+	echo 1 > /sys/class/graphics/fb1/blank
+fi
+
+DEBUG_IP=$(sed 's/\ /\n/g' /proc/cmdline | grep "^debugip=" | sed 's/^debugip=//g')
+if [ -n "$DEBUG_IP" ]
+then
+        echo "auto eth0" > /etc/network/interfaces
+        echo "iface eth0 inet dhcp" >> /etc/network/interfaces
+        /sbin/ifup eth0
+        /usr/bin/netcat -e /bin/sh "$DEBUG_IP" 9999
+
+	while true
+	do
+	    sleep 1
+	done
+fi
+
+grep -q atvinst /proc/cmdline
+if [ $? == 0 ]
+then
+    if [ -b /dev/sda ] && [ -b /dev/sdb ]
+    then
+        dd if=/dev/sdb of=/dev/sda bs=1M count=256 conv=fsync >/dev/null 2>&1
+        dd if=/dev/zero of=/dev/sdb bs=512 count=1 >/dev/null 2>&1
+        dd if=/dev/zero of=/dev/sdb bs=1M count=1 skip=255 > /dev/null 2>&1
+	echo "Please remove USB stick and  unplug the Apple TV.  Wait 10 seconds and plug the Apple TV back in"
+	loopforever
+    fi
+    if [ ! -b /dev/sda ]
+    then
+	echo "No internal disk detected"
+	loopforever
+    fi
+fi
+
+grep -q osmcuart /proc/cmdline
+if [ $? == 0 ]
+then
+	/sbin/getty -L ttyAMA0 115200 vt100 &
+	loopforever
+fi
 
 /usr/bin/qt_target_installer -qws
 clear
-while true
-do
-	sleep 1
-done
+loopforever

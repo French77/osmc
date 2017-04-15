@@ -26,6 +26,12 @@ USERART  = os.path.join(xbmc.translatePath('special://userdata/'),'addon_data', 
 
 
 def log(message):
+
+	try:
+		message = str(message)
+	except UnicodeEncodeError:
+		message = message.encode('utf-8', 'ignore' )
+		
 	xbmc.log('OSMC APFStore class : ' + str(message), level=xbmc.LOGDEBUG)
 
 
@@ -116,7 +122,7 @@ class APF_obj(xbmcgui.ListItem):
 
 		if self.iconhash == 'NA':
 
-			return os.path.join(ADDONART, 'osmc_logo.png')
+			return os.path.join(ADDONART, 'osmc_osmclogo.png')
 
 		icon_name = iconurl.split('/')[-1]
 
@@ -132,7 +138,7 @@ class APF_obj(xbmcgui.ListItem):
 
 		else:
 
-			current_icon = os.path.join(ADDONART, 'osmc_logo.png')
+			current_icon = os.path.join(ADDONART, 'osmc_osmclogo.png')
 
 		log('current icon = %s' % current_icon)
 

@@ -5,7 +5,7 @@
 
 . ../common.sh
 
-pull_source "http://sqlite.org/2015/sqlite-autoconf-3081101.tar.gz" "$(pwd)/src"
+pull_source "http://sqlite.org/2017/sqlite-autoconf-3160000.tar.gz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error downloading" && exit 1; fi
 # Build in native environment
 build_in_env "${1}" $(pwd) "libsqlite-osmc"
@@ -19,14 +19,20 @@ then
 	sed '/Package/d' -i files/DEBIAN/control
 	sed '/Package/d' -i files-dev/DEBIAN/control
 	sed '/Depends/d' -i files-dev/DEBIAN/control
+        sed '/Version/d' -i files-dev/DEBIAN/control
+        VERSION_DEV=$(grep Version ${out}/DEBIAN/control)
+        VERSION_NUM=$(echo $VERSION_DEV | awk {'print $2'})
+        echo $VERSION_DEV >> files-dev/DEBIAN/control
+        echo "Depends: ${1}-libsqlite-osmc (=${VERSION_NUM})" >> files-dev/DEBIAN/control
 	update_sources
 	handle_dep "autoconf"
 	handle_dep "libtool"
-	echo "Package: ${1}-libsqlite-osmc" >> files/DEBIAN/control && echo "Package: ${1}-libsqlite-dev-osmc" >> files-dev/DEBIAN/control && echo "Depends: ${1}-libsqlite-osmc" >> files-dev/DEBIAN/control
+	echo "Package: ${1}-libsqlite-osmc" >> files/DEBIAN/control && echo "Package: ${1}-libsqlite-dev-osmc" >> files-dev/DEBIAN/control
 	pushd src/sqlite*
-	./configure --prefix=/usr --enable-threadsafe --disable-readline
+	install_patch "../../patches" "all"
+	./configure --prefix=/usr/osmc --enable-threadsafe --disable-readline
 	export CXXFLAGS+="-DSQLITE_ENABLE_COLUMN_METADATA=1"
-	export CFLAGS+="-DSQLITE_TEMP_STORE=3 -DSQLITE_DEFAULT_MMAP_SIZE=0x10000000"
+	export CFLAGS+="-DSQLITE_TEMP_STORE=3 -DSQLITE_DEFAULT_MMAP_SIZE=0x10000000 -DHAVE_USLEEP=1"
 	export TCLLIBDIR="/dev/null"
 	$BUILD
 	make install DESTDIR=${out}
@@ -34,8 +40,8 @@ then
 	if [ $? != 0 ]; then echo "Error occured during build" && exit 1; fi
 	strip_files "${out}"
 	popd
-	mkdir -p files-dev/usr
-	mv files/usr/include  files-dev/usr/
+	mkdir -p files-dev/usr/osmc
+	mv files/usr/osmc/include  files-dev/usr/osmc
 	fix_arch_ctl "files/DEBIAN/control"
 	fix_arch_ctl "files-dev/DEBIAN/control"
 	dpkg_build files ${1}-libsqlite-osmc.deb

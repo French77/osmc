@@ -33,11 +33,17 @@ LIRCD_PATH = '/etc/lirc/lircd.conf'
 ETC_LIRC   = '/etc/lirc'
 
 if not os.path.isdir(ETC_LIRC):
-	LIRCD_PATH = '/home/kubkev/temp/lirc/lircd.conf'
-	ETC_LIRC   = '/home/kubkev/temp/lirc'	
+	LIRCD_PATH = '/home/plaskev/temp/lirc/lircd.conf'
+	ETC_LIRC   = '/home/plaskev/temp/lirc'	
 
 
 def log(message):
+
+	try:
+		message = str(message)
+	except UnicodeEncodeError:
+		message = message.encode('utf-8', 'ignore' )
+		
 	xbmc.log('REMOTE: ' + str(message), level=xbmc.LOGDEBUG)
 
 
@@ -163,8 +169,10 @@ class remote_GUI(xbmcgui.WindowXMLDialog):
 
 	def __init__(self, strXMLname, strFallbackPath, strDefaultName, local_confs, active_conf):
 
-		self.local_confs = local_confs
-		self.active_conf = active_conf
+		self.local_confs  = local_confs
+		self.active_conf  = active_conf
+		self.rc6_file     = '/etc/modprobe.d/blacklist-rc6.conf'
+		self.rc6_file_loc = '/etc/modprobe.d'
 
 		self.remote_selection = None
 
@@ -183,6 +191,14 @@ class remote_GUI(xbmcgui.WindowXMLDialog):
 			self.getControl(50).setVisible(False)
 		except:
 			pass
+
+		# check for RC6 file, then set the radiobutton appropriately
+		if os.path.isfile(self.rc6_file):
+			log('RC6 blacklist file located')
+			self.getControl(8).setSelected(True)
+		else:
+			log('RC6 blacklist file not found')
+			self.getControl(8).setSelected(False)
 
 
 	def find_custom_item(self):
@@ -213,6 +229,28 @@ class remote_GUI(xbmcgui.WindowXMLDialog):
 				tmp.select(True)
 			else:
 				tmp.select(False)
+
+
+	def rc6_handling(self):
+
+		sel = self.getControl(8).isSelected()
+
+		if sel:
+			# always overwrite the file, this will allow the contents to be updated (if ever needed)
+			log('Creating RC6 blacklist file')
+
+			with open('/var/tmp/blacklist-rc6.conf', 'w') as f:
+				f.write('blacklist ir_rc6_decoder\ninstall ir_rc6_decoder /bin/true')
+
+			subprocess.call(["sudo", "mv", '/var/tmp/blacklist-rc6.conf', self.rc6_file_loc])
+
+			log('RC6 blacklist file moved')
+
+		else:
+
+			log('RC6 blacklist file removed')
+
+			subprocess.call(["sudo", "rm", "-f", self.rc6_file])
 
 
 	def onClick(self, controlID):
@@ -250,10 +288,11 @@ class remote_GUI(xbmcgui.WindowXMLDialog):
 		elif controlID == 7:
 			# user has selected Exit
 
+			self.rc6_handling()
+
 			self.remote_selection = None
 
 			self.close()
-
 
 		elif controlID == 62:
 			# user has chosen to browse for the file

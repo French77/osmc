@@ -4,7 +4,7 @@
 #!/bin/bash
 
 . ../common.sh
-VERSION="v4.0.5"
+VERSION="v4.0.9"
 pull_source "https://github.com/tvheadend/tvheadend/archive/${VERSION}.tar.gz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error downloading" && exit 1; fi
 # Build in native environment
@@ -23,6 +23,7 @@ then
 	handle_dep "libcurl3"
 	handle_dep "libcurl4-gnutls-dev"
 	handle_dep "git" # for dvbscan info?
+	handle_dep "ca-certificates"
 	handle_dep "zlib1g-dev"
 	handle_dep "liburiparser-dev"
 	handle_dep "libavcodec-dev"
@@ -33,11 +34,16 @@ then
 	handle_dep "libhdhomerun-dev"
 	handle_dep "dvb-tools"
 	handle_dep "libdvbv5-0"
+	handle_dep "bzip2"
+	handle_dep "gzip"
+	handle_dep "libsystemd-daemon-dev"
+	handle_dep "liburiparser-dev"
 	mkdir -p files/etc/osmc/apps.d
 	echo "Package: ${1}-tvheadend-app-osmc" >> files/DEBIAN/control && APP_FILE="files/etc/osmc/apps.d/${1}-tvheadend-app-osmc"
     	echo -e "TVHeadend Server\ntvheadend.service" > $APP_FILE
 	pushd src/tvheadend*
-	./configure --prefix=/usr
+	./configure --prefix=/usr --enable-hdhomerun_client --disable-hdhomerun_static --disable-inotify --enable-zlib --enable-libav --disable-libffmpeg_static --disable-libffmpeg_static_x264 \
+		--disable-epoll --enable-uriparser --disable-tvhcsa --disable-bundle --disable-dvbcsa --disable-dvben50221 --disable-kqueue --enable-dbus_1 --disable--android --disable-tsdebug --disable-gtimer_check --enable-dvbscan
 	sed -e "s/-Werror//" -i Makefile
 	sed -e "s/0.0.0~unknown/${VERSION}~osmc/" -i support/version
 	$BUILD

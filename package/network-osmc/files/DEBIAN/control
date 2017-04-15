@@ -1,6 +1,5 @@
 Origin: OSMC
-Package: network-osmc
-Version: 1.5.6
+Version: 1.6.6
 Section: net
 Essential: No
 Priority: required

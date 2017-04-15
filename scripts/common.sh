@@ -5,14 +5,12 @@
 
 function check_platform()
 {
-    platform=$(lsb_release -c -s)
-    case $platform in
-        "wheezy" | "trusty" | "utopic" | "jessie" )
-            return 0
-            ;;
-        * )
-            return 1
-    esac
+    if grep -q "debian" /etc/os-release
+    then
+       return 0
+    else
+       return 1
+    fi
 }
 
 function verify_action()
@@ -40,13 +38,21 @@ function add_apt_key()
 function emulate_arm()
 {
 	echo Copying ARM QEMU binary
-	cp /usr/bin/qemu-arm-static ${1}/usr/bin/qemu-arm-static
+	if [ "$2" == "32" ]; then ARM_EMULATOR="qemu-arm-static"; fi
+	if [ "$2" == "64" ]; then ARM_EMULATOR="qemu-aarch64-static"; fi
+	# Default to 32-bit
+	if [ -z "$2" ]; then ARM_EMULATOR="qemu-arm-static"; fi
+	cp /usr/bin/${ARM_EMULATOR} ${1}/usr/bin/${ARM_EMULATOR}
 }
 
 function remove_emulate_arm()
 {
 	echo Removing ARM QEMU binary
-	rm ${1}/usr/bin/qemu-arm-static
+        if [ "$2" == "32" ]; then ARM_EMULATOR="qemu-arm-static"; fi
+        if [ "$2" == "64" ]; then ARM_EMULATOR="qemu-aarch64-static"; fi
+        # Default to 32-bit
+        if [ -z "$2" ]; then ARM_EMULATOR="qemu-arm-static"; fi
+	rm ${1}/usr/bin/${ARM_EMULATOR}
 }
 
 function update_sources()
@@ -65,7 +71,11 @@ function install_package()
 	then
 		echo -e "Package already installed."
 	else
-		apt-get -y --no-install-recommends install $1
+	if [ ! -z "$2" ]
+	then
+		if [ "$2" -eq 1 ]; then EMD=$(find /usr/lib | grep libeatmydata | tail -n 1); fi
+	fi
+	LD_PRELOAD=${EMD} apt-get -y --no-install-recommends install $1
 		if [ $? != 0 ]; then echo -e "Failed to install" && return 1; else echo -e "Package installed successfully" && return 0; fi
 	fi
 }
@@ -107,6 +117,8 @@ function cleanup_filesystem()
 	rm -rf ${1}/var/lib/apt/lists/*
 	rm -f ${1}/var/log/*.log
 	rm -f ${1}/var/log/apt/*.log
+	rm -f ${1}/tmp/reboot-needed
+	rm -f ${1}/var/cache/apt/pkgcache.bin
 }
 
 function remove_existing_filesystem()
@@ -123,7 +135,7 @@ function install_patch()
 		echo Applying patch $patch
 		if ! grep -q "GIT binary patch" $patch
 		then
-		    patch -p1 < $patch
+		    patch -p1 --ignore-whitespace < $patch
 		    verify_action
 	        else
 		    # this is a binary patch
@@ -143,11 +155,13 @@ function pull_source()
 	chrootval=$?
 	if [ $chrootval == 2 ] || [ $chrootval == 0 ]; then return; fi # Prevent recursive loop
 	if ! command -v unzip >/dev/null 2>&1; then update_sources && verify_action && install_package "unzip" && verify_action; fi
+	if ! command -v bunzip2 >/dev/null 2>&1; then update_sources && verify_action && install_package "bzip2" && verify_action; fi
 	if ! command -v git >/dev/null 2>&1; then update_sources && verify_action && install_package "git" && verify_action; fi
 	if ! command -v svn >/dev/null 2>&1; then update_sources && verify_action && install_package "subversion" && verify_action; fi
 	if ! command -v wget >/dev/null 2>&1; then update_sources && verify_action && install_package "wget" && verify_action; fi
+	if ! command -v xz >/dev/null 2>&1; then update_sources && verify_action && install_package "xz-utils" && verify_action; fi
 	if [ -d ${2} ]
-	then 
+	then
 		if [ "$2" != "." ]
 		then
 			echo "Cleaning old source" && rm -rf ${2}; fi
@@ -187,6 +201,12 @@ function pull_source()
 	echo -e "Detected Git source"
 	git clone ${1} ${2}
 	if [ $? != 0 ]; then echo "Source checkout failed" && exit 1; fi
+	if [ ! -z $3 ]
+	then
+	    pushd ${2}
+	    git reset --hard ${3}
+	    popd
+	fi
 	return
 	fi
 
@@ -207,11 +227,12 @@ function pull_bin()
 
 if [ -z $DOWNLOAD_URL ]
 then
-	DOWNLOAD_URL=$(env LANG=C wget -S --spider --timeout 60 http://download.osmc.tv 2>&1 > /dev/null | grep "^Location:" | cut -f 2 -d ' ')
+	#DOWNLOAD_URL=$(env LANG=C wget -S --spider --timeout 60 http://download.osmc.tv 2>&1 > /dev/null | grep "^Location:" | cut -f 2 -d ' ')
+	DOWNLOAD_URL="http://download.osmc.tv"
 	export DOWNLOAD_URL
 fi
 
-cores=$(if [ ! -f /proc/cpuinfo ]; then mount -t proc proc /proc; fi; cat /proc/cpuinfo | grep processor | wc -l && umount /proc/ >/dev/null 2>&1)
+cores=$(if [ ! -f /proc/cpuinfo ]; then mount -t proc proc /proc; fi; getconf _NPROCESSORS_ONLN && umount /proc > /dev/null 2>&1)
 export BUILD="make -j${cores}"
 
 export -f check_platform

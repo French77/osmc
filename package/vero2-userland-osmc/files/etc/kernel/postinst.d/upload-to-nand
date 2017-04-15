@@ -1,0 +1,15 @@
+#!/bin/sh
+
+processimage()
+{
+    if ischroot; then exit 0; fi
+    LANG=C /bin/dd if=/boot/kernel-${1}.img of=/dev/boot bs=1M conv=fsync
+    STATUS=$?
+    if [ "$STATUS" != 0 ]
+    then
+        echo "Could not upload kernel to NAND" >&2
+        exit $STATUS
+    fi
+}
+
+processimage $1

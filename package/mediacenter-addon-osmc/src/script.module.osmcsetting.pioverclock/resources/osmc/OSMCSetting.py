@@ -30,7 +30,7 @@
 		addonid							: The id for the addon. This must be the id declared in the addons addon.xml.
 
 		reboot_required					: A boolean to declare if the OS needs to be rebooted. If a change in a specific setting 
-									 	  requires an OS reboot to take affect, this is flag that will let the OSG know.
+										  requires an OS reboot to take affect, this is flag that will let the OSG know.
 
 		setting_data_method 			: This dictionary contains:
 												- the name of all settings in the module
@@ -80,7 +80,7 @@
 
 '''
 # Standard Modules
-from collections import namedtuple
+import subprocess
 import sys
 import os
 import threading
@@ -98,17 +98,49 @@ DIALOG     = xbmcgui.Dialog()
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon(addonid).getAddonInfo('path'), 'resources','lib')))
 
 # OSMC SETTING Modules
-import config_tools as ct
+import OSMC_OCparser as parser
 from gui import overclock_gui
 
 
 def log(message):
+
+	try:
+		message = str(message)
+	except UnicodeEncodeError:
+		message = message.encode('utf-8', 'ignore' )
+		
 	xbmc.log('OSMC PI OVERCLOCK ' + str(message), level=xbmc.LOGDEBUG)
 
 
 def lang(id):
-    san = __addon__.getLocalizedString(id).encode( 'utf-8', 'ignore' )
-    return san 
+	san = __addon__.getLocalizedString(id).encode( 'utf-8', 'ignore' )
+	return san 
+
+
+def is_pi_zero():
+
+	try:
+		with open('/proc/cpuinfo','r') as f:
+			lines = f.readlines()
+			for line in lines:
+				if line[0:8]=='Revision':
+					myrevision = line[11:len(line)-1]
+			else:
+				raise
+	except:
+		myrevision = "0000"
+
+	try: # Pi2 revision starts with 'a'
+		revisionInt = int(myrevision, 16)
+
+	except ValueError:
+		return False
+
+	if revisionInt >> 23 & 1 == True:
+		if (revisionInt >> 4) & 0X7FF == 9:
+			raise
+
+	return False
 
 
 class OSMCSettingClass(threading.Thread):
@@ -125,6 +157,8 @@ class OSMCSettingClass(threading.Thread):
 			The setting_data_method contains all the settings in the settings group, as well as the methods to call when a
 			setting_value has changed and the existing setting_value. 
 		'''
+
+		is_pi_zero()
 
 		super(OSMCSettingClass, self).__init__()
 
@@ -182,55 +216,56 @@ The module allows you to manually adjust:
 
 		# the location of the config file FOR TESTING ONLY
 		try:								
-			self.test_config = '/boot/config.txt'
-			self.config_settings = ct.read_config(self.test_config)
+			config_location = '/boot/config.txt'
+			config = parser.read_config_file(config_location)
 
 		except:
-			self.test_config = '/home/kubkev/Documents/config.txt'
-			self.config_settings = ct.read_config(self.test_config)
+			config_location = '/home/plaskev/Documents/config.txt'
+			config = parser.read_config_file(config_location)
 
-		oc_keys = ['arm_freq', 'sdram_freq', 'core_freq', 'initial_turbo', 'over_voltage', 'over_voltage_sdram', 'force_turbo']
+		# oc_keys = ['arm_freq', 'sdram_freq', 'core_freq', 'initial_turbo', 'over_voltage', 'over_voltage_sdram', 'force_turbo']
 
-		self.setting_values = {}
-		for key in oc_keys:
-			if key in self.config_settings:
-				self.setting_values[key] = self.config_settings[key]
+		# read the config.txt file everytime the settings are opened. This is unavoidable because it is possible for
+		# the user to have made manual changes to the config.txt while OSG is active.
+		config = parser.read_config_file(config_location)
+
+		extracted_settings = parser.config_to_kodi(parser.MASTER_SETTINGS, config)
+
+		# print the settings
+		log('Settings extracted from the config.txt')
+		for k, v in extracted_settings.iteritems():
+
+			log("%s : %s" % (k, v))
+			# self.me.setSetting(k, str(v))
 
 		# setting_values = {'core_freq': 500, 'arm_freq': 800, 'sdram_freq': 700, 'initial_turbo': 60, 'over_voltage': 2, 'over_voltage_sdram': 6, 'force_turbo' : 0}
 
 		xml = "new_gui_720.xml" if xbmcgui.Window(10000).getProperty("SkinHeight") == '720' else "new_gui.xml"
 
-		self.GUI = overclock_gui(xml, scriptPath, 'Default', setting_values=self.setting_values, model=self.pimodel)
+		GUI = overclock_gui(xml, scriptPath, 'Default', setting_values=extracted_settings, model=self.pimodel)
 
-		self.GUI.doModal()
+		GUI.doModal()
 
-		self.new_settings = self.GUI.snapshot()
-		log('self.new_settings')
-		log(self.new_settings)
-		log('self.setting_values')
-		log(self.setting_values)
 
-		ct.write_config(self.test_config, self.new_settings)
+		new_settings = GUI.snapshot()
 
-		del self.GUI
+		log('New settings applied to the config.txt')
+		for k, v in new_settings.iteritems():
+			log("%s : %s" % (k, v))
 
-		for k, s in self.new_settings.iteritems():
-			if s != self.setting_values.get(k, 'no setting available'):
-				self.reboot_required
+		del GUI
 
-		# dialog to notify the user they should restart for changes to take effect
-		ok = DIALOG.notification(lang(32107), lang(32108))
+		config = parser.read_config_file(config_location)
+		new_settings = parser.kodi_to_config(parser.MASTER_SETTINGS, config, new_settings)
 
-		log('END')
+		# write the new lines to the temporary config file
+		parser.write_config_file('/var/tmp/config.txt', new_settings)
+
+		# copy over the temp config.txt to /boot/ as superuser
+		subprocess.call(["sudo", "mv",  '/var/tmp/config.txt', config_location])
 
 
 	def apply_settings(self):
-
-		'''
-			This method will apply all of the settings. It calls the first_method, if it exists. 
-			Then it calls the method listed in setting_data_method for each setting. Then it calls the
-			final_method, again, if it exists.
-		'''
 
 		pass
 

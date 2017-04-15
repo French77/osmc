@@ -2,69 +2,88 @@
 <window>
     <defaultcontrol always="true">20010</defaultcontrol>
     <controls>
-        <control id="92000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="93000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="94000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="95000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="96000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="97000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="98000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
-        </control>
-        <control id="99000" type="label">
-            <description>visibility controller</description>
-            <posx>20</posx>
-            <posy>20</posy>
-            <width>1</width>
-            <height>1</height>
-            <label/>
+        <!-- VISIBILITY CONTROLLERS -->
+        <control type="grouplist">
+            <control id="92000" type="label">
+                <description>visibility controller - language</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="93000" type="label">
+                <description>visibility controller - timezone</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="125000" type="label">
+                <description>visibility controller - hostname</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="127000" type="label">
+                <description>visibility controller - SSH</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="94000" type="label">
+                <description>visibility controller - Terms and Conditions</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="95000" type="label">
+                <description>visibility controller - Exit</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="96000" type="label">
+                <description>visibility controller - networking</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="97000" type="label">
+                <description>visibility controller - warranty</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="98000" type="label">
+                <description>visibility controller - skin selection</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
+            <control id="99000" type="label">
+                <description>visibility controller - Newsletter</description>
+                <posx>20</posx>
+                <posy>20</posy>
+                <width>1</width>
+                <height>1</height>
+                <label/>
+            </control>
         </control>
         <!-- Background -->
         <control type="image">
@@ -87,7 +106,7 @@
             <top>100</top>
             <width>247</width>
             <height>44</height>
-            <texture>logo.png</texture>
+            <texture>osmcosmclogo.png</texture>
         </control>
         <!-- Left Menu button List -->
         <control id="1000" type="grouplist">
@@ -133,6 +152,39 @@
                 <aligny>center</aligny>
                 <onclick>noop</onclick>
                 <onright>3000</onright>
+            </control>
+            <!-- Hostname -->
+            <control id="10035" type="button">
+                <width>300</width>
+                <height>42</height>
+                <!-- <label>$ADDON[service.osmc.settings 32010]</label>-->
+                <label>Hostname</label>
+                <font>osmc_addon_Large</font>
+                <!--former_line<font>osmc_addon_OLD_Font42</font>-->
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <!--former_line<focusedcolor>ffffffff</focusedcolor>-->
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+                <onright>350010</onright>
+            </control>
+            <!-- SSH -->
+            <control id="10037" type="button">
+                <width>300</width>
+                <height>42</height>
+                <label>SSH</label>
+                <font>osmc_addon_Large</font>
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+                <onright>370010</onright>
             </control>
             <!-- T&C -->
             <control id="1004" type="button">
@@ -528,6 +580,154 @@
             <texture>osmc_preview.png</texture>
             <visible>Control.IsVisible(98000)</visible>
         </control>
+        <!-- hostname change panel                -->
+        <control id="35000" type="grouplist">
+            <left>480</left>
+            <top>244</top>
+            <width>1200</width>
+            <height>726</height>
+            <itemgap>34</itemgap>
+            <onleft>1000</onleft>
+            <onright>9999</onright>
+            <visible>Control.IsVisible(125000)</visible>
+            <onup>noop</onup>
+            <ondown>noop</ondown>
+            <orientation>vertical</orientation>
+            <control type="label">
+                <width>1800</width>
+                <height>42</height>
+                <label>Give your device a name</label>
+                <font>osmc_addon_Large</font>
+                <!--former_line<font>osmc_addon_OLD_Font42</font>-->
+                <textcolor>66ffffff</textcolor>
+                <align>left</align>
+                <aligny>center</aligny>
+            </control>
+            <control id="350010" type="button">
+                <width>1600</width>
+                <height>42</height>
+                <label>current name: osmc</label>
+                <font>osmc_addon_Med</font>
+                <!--former_line<font>osmc_addon_OLD_Font36</font>-->
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <!--former_line<focusedcolor>ffffffff</focusedcolor>-->
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control>
+            <control id="350011" type="button">
+                <width>1600</width>
+                <height>42</height>
+                <label>(suggest a random name)</label>
+                <font>osmc_addon_XSmall</font>
+                <!--former_line<font>osmc_addon_OLD_Font36</font>-->
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <!--former_line<focusedcolor>ffffffff</focusedcolor>-->
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control>
+            <control id="350012" type="button">
+                <width>1600</width>
+                <height>42</height>
+                <visible>!SubString(Control.GetLabel(350010),.............)</visible>
+                <label>Accept</label>
+                <font>osmc_addon_Med</font>
+                <!--former_line<font>osmc_addon_OLD_Font36</font>-->
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <!--former_line<focusedcolor>ffffffff</focusedcolor>-->
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control>
+        </control>
+        <!-- SSH disabling and password reset panel                -->
+        <control id="37000" type="grouplist">
+            <left>480</left>
+            <top>244</top>
+            <width>1200</width>
+            <height>726</height>
+            <itemgap>34</itemgap>
+            <onleft>1000</onleft>
+            <onright>9999</onright>
+            <visible>Control.IsVisible(127000)</visible>
+            <onup>noop</onup>
+            <ondown>noop</ondown>
+            <orientation>vertical</orientation>
+            <control type="label">
+                <width>1800</width>
+                <height>42</height>
+                <label>SSH gives you full control of your device and is accessible</label>
+                <font>osmc_addon_Large</font>
+                <textcolor>66ffffff</textcolor>
+                <align>left</align>
+                <aligny>center</aligny>
+            </control>
+            <control type="label">
+                <width>1800</width>
+                <height>60</height>
+                <label>via your network. This is very useful for troubleshooting.</label>
+                <font>osmc_addon_Large</font>
+                <textcolor>66ffffff</textcolor>
+                <align>left</align>
+                <aligny>top</aligny>
+            </control>
+            <control id="370010" type="radiobutton">
+                <posx>15</posx>
+                <posy>40</posy>
+                <width>600</width>
+                <height>42</height>
+                <label>$ADDON[service.osmc.settings 32036]</label>
+                <font>osmc_addon_Med</font>
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control>
+
+
+            <!-- SSH PASSWORD CHANGE FUNCTION SUPPRESSED AT THIS TIME -->
+<!--             <control id="370011" type="button">
+                <width>1600</width>
+                <height>42</height>
+                <label>Click here to change/confirm password:    osmc (default)</label>
+                <font>osmc_addon_Med</font>
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control> -->
+            
+            <control id="370012" type="button">
+                <width>1600</width>
+                <height>42</height>
+                <!-- <visible>!SubString(Control.GetLabel(370011),(default))</visible> -->
+                <label>Accept</label>
+                <font>osmc_addon_Med</font>
+                <textcolor>66ffffff</textcolor>
+                <focusedcolor>ffe0b074</focusedcolor>
+                <texturefocus>single_pixel.png</texturefocus>
+                <texturenofocus>single_pixel.png</texturenofocus>
+                <align>left</align>
+                <aligny>center</aligny>
+                <onclick>noop</onclick>
+            </control>
+        </control>
         <!-- newsletter signup                  -->
         <control id="9000" type="grouplist">
             <left>480</left>
@@ -618,7 +818,6 @@
                 <align>center</align>
                 <aligny>center</aligny>
             </control>
-
             <control type="label">
                 <top>45</top>
                 <width>1200</width>
@@ -630,9 +829,6 @@
                 <align>center</align>
                 <aligny>center</aligny>
             </control>
-
-
-
             <control type="label">
                 <top>45</top>
                 <width>1200</width>
@@ -666,7 +862,6 @@
                 <align>center</align>
                 <aligny>center</aligny>
             </control>
-
             <control type="label">
                 <top>90</top>
                 <width>1200</width>
@@ -878,12 +1073,12 @@
                         <left>32</left>
                         <top>0</top>
                         <width>1218</width>
-                        <height>180</height>
+                        <height>120</height>
                         <font>osmc_addon_XLarge</font>
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -924,7 +1119,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -965,7 +1160,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1006,7 +1201,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1047,7 +1242,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1088,7 +1283,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1129,7 +1324,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1170,7 +1365,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1211,7 +1406,7 @@
                         <!--former_line<font>osmc_addon_OLD_Font72</font>-->
                         <!-- <font>osmc_addon_font13</font>-->
                         <label>$INFO[ListItem.Label]</label>
-                        <textcolor>ff808080</textcolor>
+                        <textcolor>ffe0b074</textcolor>
                         <!--former_line<textcolor>ffffffff</textcolor>-->
                         <shadowcolor>44000000</shadowcolor>
                         <!-- <animation condition="!Control.HasFocus(500)" easing="out" effect="fade" end="50" reversible="true" start="100" time="200" tween="cubic">Conditional</animation>-->
@@ -1219,5 +1414,17 @@
                 </focusedlayout>
             </control>
         </control>
+
+
+        <!-- COVER, provides a sheet over all the controls when the window loads -->
+        <control type="image" id="123456789">
+            <left>0</left>
+            <top>0</top>
+            <width>1920</width>
+            <height>1080</height>
+            <texture colordiffuse="ff0b2430">white.png</texture>
+        </control>
+
+
     </controls>
 </window>

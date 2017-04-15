@@ -6,6 +6,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import tarfile
 import tempfile
 import traceback
@@ -42,6 +43,7 @@ LOCATIONS = {
 			'backup_upnpserver'			:	'{kodi_folder}userdata/upnpserver.xml',
 			'backup_peripheral_data'	:	'{kodi_folder}userdata/peripheral_data.xml',
 			'backup_guisettings'		:	'{kodi_folder}userdata/guisettings.xml',
+			'backup_fstab'				:	'{kodi_folder}userdata/fstab',
 			'backup_advancedsettings'	:	'{kodi_folder}userdata/advancedsettings.xml',
 
 			}
@@ -57,8 +59,9 @@ LABELS = 	{
 			'{kodi_folder}/userdata/Thumbnails'				: 'Directory - Thumbnails',
 			'{kodi_folder}/userdata/advancedsettings.xml'	: 'File - advancedsettings.xml',
 			'{kodi_folder}/userdata/guisettings.xml'		: 'File - guisettings.xml',
+			'{kodi_folder}/userdata/fstab'					: 'File - fstab',
 			'{kodi_folder}/userdata/sources.xml'			: 'File - sources.xml',
-			'{kodi_folder}/userdata/profiles.xml'			: 'File - File - profiles.xml',
+			'{kodi_folder}/userdata/profiles.xml'			: 'File - profiles.xml',
 			'{kodi_folder}/userdata/favourites.xml' 		: 'File - favourites.xml',
 			'{kodi_folder}/userdata/keyboard.xml'			: 'File - keyboard.xml',
 			'{kodi_folder}/userdata/remote.xml'				: 'File - remote.xml',
@@ -76,6 +79,17 @@ def lang(id):
 
 
 def log(message, label = ''):
+
+	try:
+		message = str(message)
+	except UnicodeEncodeError:
+		message = message.encode('utf-8', 'ignore' )
+
+	try:
+		label = str(label)
+	except UnicodeEncodeError:
+		label = label.encode('utf-8', 'ignore' )
+
 	logmsg       = '%s : %s - %s ' % ('OSMC BACKUP: ' , str(label), str(message))
 	xbmc.log(msg = logmsg, level=xbmc.LOGDEBUG)
 
@@ -93,6 +107,7 @@ class osmc_backup(object):
 		self.progress = progress_function
 
 		self.restoring_guisettings = False
+		self.restoring_fstab = False
 
 		# backup candidates is a list of tuples that contain the folder/file path and the size in bytes of the entry
 		self.backup_candidates = self.create_backup_file_list() #if self.s.get('create_tarball', False) else None
@@ -288,6 +303,35 @@ class osmc_backup(object):
 		return sum(sizes)
 
 
+	def copy_fstab_to_userdata(self, location):
+		''' Copy /etc/fstab to the userdata folder so that it can be backed up. '''
+
+		try:
+			xbmcvfs.delete(location)
+		except:
+			log('Failed to delete temporary fstab')
+
+		success = xbmcvfs.copy('/etc/fstab', location)
+
+		if success:
+			log('fstab file successfully copied to userdata')
+
+		else:
+			log('Failed to copy fstab file to userdata.')
+			raise
+
+
+	def copy_fstab_to_etc(self, location):
+		''' Copy /etc/fstab to the userdata folder so that it can be backed up. '''
+
+		try:
+			subprocess.Popen(['sudo', 'mv', location, '/etc'])
+
+		except:
+			log('Failed to copy fstab file to /etc.')
+			raise			
+
+
 	def create_tarball(self):
 
 		''' takes the file list and creates a tarball in the backup location '''
@@ -342,6 +386,13 @@ class osmc_backup(object):
 
 			for name, size in self.backup_candidates:
 
+				# if the user wants to backup the fstab file, then copy it to userdata
+				if name.endswith('fstab'):
+					try:
+						self.copy_fstab_to_userdata(name)
+					except:
+						continue
+
 				self.progress(**{'percent':  pct, 'heading':  'OSMC Backup', 'message': '%s' % name})
 
 				try:
@@ -384,10 +435,10 @@ class osmc_backup(object):
 
 				ok = DIALOG.ok('Backup failed', 'Backup failed to copy the tar file.')
 
-                                try:
-                                        xbmcvfs.delete(local_tarball_name)
-                                except:
-                                        log('Cannot delete temp file at %s' % local_tarball_name)
+				try:
+						xbmcvfs.delete(local_tarball_name)
+				except:
+						log('Cannot delete temp file at %s' % local_tarball_name)
 
 				return 'failed'
 
@@ -591,6 +642,9 @@ class osmc_backup(object):
 					if any( [True for x in restore_items if x.name.endswith('userdata/guisettings.xml') ] ):
 						self.restoring_guisettings = True
 
+					if any( [True for x in restore_items if x.name.endswith('userdata/fstab') ] ):
+						self.restoring_fstab = True
+
 
 				elif overwrite == 1:
 					# select new folder
@@ -621,6 +675,15 @@ class osmc_backup(object):
 								t.extract(member, '/tmp/')
 
 								os.rename('/tmp/guisettings.xml', '/tmp/guisettings.restore')
+
+							elif member.name.endswith('userdata/fstab') and self.restoring_fstab:
+
+								# restore temp version back to userdata
+								t.extract(member, restore_location)
+
+								fstab_loc = os.path.join(restore_location, os.path.basename(member.name))
+
+								self.restore_fstab(fstab_loc)
 
 							else:
 
@@ -768,6 +831,90 @@ class osmc_backup(object):
 		# exportlibrary(video,true,thumbs,overwrite,actorthumbs)
 		# The video library is exported to multiple files with the given options.
 		# Here thumbs, overwrite and actorthumbs are boolean values (true or false).
+
+
+	def uniquify(self, list_with_duplicates):
+		'''Takes a list with duplicates and removes the duplicated lines, 
+		excluding blank lines or lines with only whitespace. Normally we
+		could just use list(set(list_with_duplicates)) but that screws with
+		the ordering of the list.'''
+
+		seen = []
+		list_without_duplicates = []
+
+		for item in list_with_duplicates:
+
+			# if the line is pure whitespace, then retain it, and move on
+			if not item.strip(' \n\t\r'):
+
+				list_without_duplicates.append(item)
+				continue
+
+			# if we've already added this line, then move to the next one    
+			if item in seen:
+				continue
+
+			seen.append(item)
+			list_without_duplicates.append(item)
+
+		return list_without_duplicates
+
+
+	def restore_fstab(self, location_of_backedup_fstab):
+		''' Restores the mounts in the fstab file  '''
+
+		# run the backup file through millhams function to get a list of valid entries
+		backup_mnts = {}#milham_mod(location_of_backedup_fstab)
+		unused_mnts = backup_mnts.copy()
+		new_lines   = []
+
+		# read the current fstab file, process it line by line
+		with open('/etc/fstab', 'r') as current_fstab:
+			
+			# process each line in the current fstab files
+			for line in current_fstab.readlines():
+
+				# determine if the line contains a valid mount
+				tup = {}#milham_mod_mini(line)
+
+				# if not, or if the type of mount is no on this permitted list, then 
+				# add the line as-is to the new version, and then go to the next line
+				if not tup or tup.fs_vfstype not in ['nfs','cifs','bind']:
+					new_lines.append(line)
+					continue
+
+				# if there is a valid mount, then check that local mount point against those
+				# found in the backup file we are restoring
+				for mnt in backup_mnts:
+
+					# if the local mount point is the same, then add the existing line to the new file,
+					# put the backup mnt into new file as a comment, then remove the mnt from the
+					# list of unused backup mnts
+					if mnt.fs_file == tup.fs_file:
+						new_lines.append(line)
+						new_lines.append('#' + mnt.unparsed)
+						unused_mnts.remove(mnt)
+						break
+
+				else:   # no break
+
+					# if there is no match, then just add the line as-is to the new file
+					new_lines.append(line)
+
+			# add on all the unused mnts from the backup up file at then end
+			new_lines.extend(unused_mnts)
+
+		if new_lines:
+
+			# create the new, replacement fstab file
+			# we have to unquify the list first, as the proceedure above could result in multiple 
+			# commented out lines appearing in the restored fstab
+			# it's just easier to remove them here than avoid adding them in the first place
+			with open('/tmp/fstab', 'w') as f:
+				f.writelines(uniquify(new_lines))
+
+			# finally, copy the temp fstab over the live fstab
+			res = subprocess.call(["sudo", "mv", '/tmp/fstab', '/etc/fstab' ])
 
 
 

@@ -3,48 +3,77 @@
 # (c) 2014-2015 Sam Nazarko
 # email@samnazarko.co.uk
 
-curgov=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
-if [ ! -f /safe_mode ]
-then
-    # 30 seconds of accelerated boot. we set curgov to ondemand so the next check only doesn't flip us back if we had performance to begin with
-    test "$curgov" != "performance" && echo "performance" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor && curgov="ondemand" > /dev/null 2>&1
-    sleep 30
-    test "$curgov" != "performance" && echo "ondemand" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1 && echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold && echo 100000 | tee /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate && echo 50 | tee /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor > /dev/null 2>&1
-else
-    echo "powersave" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-fi
-ISHDD=1
-ROOT=$(cat /proc/cmdline)
-ROOT="${ROOT##*root=}"
-ROOT="${ROOT%% *}"
-ROOT=$(echo $ROOT | cut -d / -f3 | tr -d 1-9p)
-ISHDD=$(cat /sys/block/${ROOT}/queue/rotational)
+# Read /proc/cmdline arguments
 
-if [ "$ISHDD" -eq 0 ]
-then
-	echo 1024 > /sys/block/${ROOT}/queue/read_ahead_kb
-fi
+for option in $(cat /proc/cmdline); do
+	case $option in
+	  osmcdev=*)
+	    OPTION_OSMCDEV="${option#*=}"
+	    ;;
+	  root=UUID=*)
+	    OPTION_UUID=$(echo "${option#root=UUID=*}" | sed 's/"//g')
+	    ;;
+	  root=*)
+	    OPTION_ROOT=$(echo "${option#*=}" | sed 's/"//g')
+	    ;;
+	  nfsroot=*)
+	    OPTION_FILESYSTEM="nfs"
+	    ;;
+	esac
+done
 
-USE_SWAP=0
+if [ "$OPTION_UUID" ]; then OPTION_ROOT=$(blkid -U "$OPTION_UUID"); fi
+
+# Set up swap file if required
+
 MEMORY=$(cat /proc/meminfo | grep MemTotal | awk {'print $2'})
 
-if [ -f /enable_swap ]; then USE_SWAP=1; fi
-if [ "$MEMORY" -lt 262144 ]; then USE_SWAP=1; fi
-if [ "$USE_SWAP" -eq 1 ]
+if [ -f /enable_swap ] || [ "$MEMORY" -lt 262144 ]
 then
-	  if [ ! -f /swap ]
-	  then
+	if [ ! -f /swap ]
+	then
 		dd if=/dev/zero of=/swap bs=1M count=128
 		chmod 0600 /swap
 		mkswap /swap
-	  fi
-      NFS_ROOT=$(grep root=/dev/nfs /proc/cmdline)
-      if [ "$NFS_ROOT" != "" ]
-      then
-	losetup /dev/loop0 /swap
-	mkswap /dev/loop0
-        swapon /dev/loop0
-    else
-        swapon /swap
-    fi
+	fi
+	if [ "$OPTION_FILESYSTEM" = "nfs" ]
+	then
+		losetup /dev/loop0 /swap
+		mkswap /dev/loop0
+		swapon /dev/loop0
+	else
+		swapon /swap
+	fi
+fi
+
+# Set readahead on non-rotational drives
+
+if [ $(lsblk -n -d -o RM "$OPTION_ROOT") -eq 1 ] || [ $(lsblk -n -d -o ROTA "$OPTION_ROOT") -eq 0 ]
+then
+	LVMDEVICES=$(lsblk -n -o MAJ:MIN,TYPE -s "$OPTION_ROOT" | grep lvm | sed 's/[^0-9:]*//g')
+	for LVMDEVICE in $LVMDEVICES; do
+		echo 4096 > "/sys/dev/block/$LVMDEVICE/queue/read_ahead_kb"
+	done
+	DEVICES=$(lsblk -n -o MAJ:MIN,TYPE -s "$OPTION_ROOT" | grep disk | sed 's/[^0-9:]*//g')
+	for DEVICE in $DEVICES; do
+		echo 1024 > "/sys/dev/block/$DEVICE/queue/read_ahead_kb"
+	done
+fi
+
+if [ "$OPTION_OSMCDEV" = "vero2" ] || [ "$OPTION_OSMCDEV" = "vero3" ]
+then
+     sleep 30
+     fstrim -v /
+fi
+
+if [ ! -f /safe_mode ]
+then
+	# 30 seconds of accelerated boot. we set curgov to ondemand so the next check only doesn't flip us back if we had performance to begin with
+	sleep 30
+	echo "ondemand" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor > /dev/null 2>&1
+	echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
+	echo 100000 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
+	echo 50 > /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor
+	else
+	echo "powersave" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 fi

@@ -22,4 +22,4 @@ OSMC is licensed under the GPLv2. Commits to the OSMC codebase become copyright 
 
 For help and support, please refer to our blog at <a href="https://osmc.tv">https://osmc.tv</a>. We have a discussion forum at <a href="https://discourse.osmc.tv">https://discourse.osmc.tv</a> with a bustling community full of users eager to help each other out. 
 
-![Screenshot](http://imgur.com/omz2FwD.png"Screenshot")
+![Screenshot](https://imgur.com/omz2FwD.png"Screenshot")

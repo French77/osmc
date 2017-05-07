@@ -25,3 +25,4 @@ For help and support, please refer to our blog at <a href="https://osmc.tv">http
 ![Screenshot](https://imgur.com/HE41dK9.png"Screenshot")
 
 ![](https://img.shields.io/badge/Contributie-Welkom-brightgreen.svg)
+[![Download](https://img.shields.io/badge/downloads-OSMC-brightgreen.svg)](https://osmc.tv/download)

@@ -31,7 +31,7 @@ done
 # Configure the target directory
 ARCH="armhf"
 DIR="opt/osmc-tc/${tcstub}"
-RLS="jessie"
+RLS="stretch"
 URL="http://mirrordirector.raspbian.org/raspbian"
 
 # Remove existing build
@@ -54,14 +54,14 @@ enable_nw_chroot "${DIR}"
 verify_action
 
 # Set up sources.list
-echo "deb http://mirrordirector.raspbian.org/raspbian jessie main contrib non-free
-deb http://apt.osmc.tv jessie-devel main
+echo "deb http://mirrordirector.raspbian.org/raspbian $RLS main contrib non-free
+deb http://apt.osmc.tv $RLS-devel main
 " > ${DIR}/etc/apt/sources.list
 
 # Performing chroot operation
 chroot ${DIR} mount -t proc proc /proc
 add_apt_key "${DIR}" "http://apt.osmc.tv/apt.key"
-add_apt_key "${DIR}" "http://mirrordirector.raspbian.org/raspbian.public.key"
+add_apt_key "${DIR}" "https://www.raspberrypi.org/raspberrypi.gpg.key"
 verify_action
 echo -e "Updating sources"
 chroot ${DIR} apt-get update

@@ -24,5 +24,5 @@ For help and support, please refer to our blog at <a href="https://osmc.tv">http
 
 ![Screenshot](https://imgur.com/HE41dK9.png"Screenshot")
 
-[![label](https://img.shields.io/github/issues-raw/badges/shields/website.svg)]()
-[![Download](https://img.shields.io/badge/downloads-OSMC-brightgreen.svg)](https://osmc.tv/download)
+![label](https://img.shields.io/badge/WedgeCMS-2017.09.2-brightgreen.svg?style=social&label=OSMC-Versie)
+![label](https://img.shields.io/badge/WedgeCMS-8.9-brightgreen.svg?style=social&label=Debian-Versie)

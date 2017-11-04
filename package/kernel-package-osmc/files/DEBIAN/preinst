@@ -13,12 +13,10 @@ if [ "$1" = "install" -o "$1" = "upgrade" ]; then
 
 	# install all diverts needed by this version of the package:
 	# install_divert PATH_DIV PATH_ORIG
-
-	install_divert /etc/issue.distributed /etc/issue
-	install_divert /etc/issue.net.distributed /etc/issue.net
-	install_divert /etc/os-release.distributed /etc/os-release
-	install_divert /usr/share/base-files/motd.distributed /usr/share/base-files/motd
-	install_divert /etc/nsswitch.conf.distributed /etc/nsswitch.conf
-	install_divert /usr/bin/apt-get-real /usr/bin/apt-get
-	install_divert /usr/bin/apt-real /usr/bin/apt
+        if [ ! -f /tcver.* ]
+        then
+            install_divert /etc/kernel-img.conf.distributed /etc/kernel-img.conf
+        else
+            rm -f /etc/kernel-img.conf
+        fi
 fi

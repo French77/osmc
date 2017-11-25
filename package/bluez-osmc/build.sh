@@ -5,14 +5,7 @@
 
 . ../common.sh
 
-if [ "$1" == "trans" ]
-then
-    echo -e "Building transitional package"
-    dpkg_build files-trans ${1}-bluez-osmc.deb
-    exit 0
-fi
-
-VERSION="5.39"
+VERSION="5.43"
 pull_source "https://www.kernel.org/pub/linux/bluetooth/bluez-${VERSION}.tar.xz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error fetching bluez source" && exit 1; fi
 # Build in native environment
@@ -44,7 +37,7 @@ then
 	echo "Package: ${1}-bluez-osmc" >> files/DEBIAN/control
 	pushd src/bluez-$VERSION
     	install_patch "../../patches" "all"
-	./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+	./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-udevdir=/lib/udev --with-systemdsystemunitdir=/lib/systemd --with-systemduserunitdir=/etc/systemd/user
 	if [ $? != 0 ]; then echo -e "Configure failed!" && umount /proc/ > /dev/null 2>&1 && exit 1; fi
 	$BUILD
 	if [ $? != 0 ]; then echo -e "Build failed!" && exit 1; fi

@@ -42,7 +42,8 @@ syspaths="/sys/class/video/axis
 /sys/module/di/parameters/bypass_all
 /sys/class/video/freerun_mode
 /sys/module/amlvideodri/parameters/freerun_mode
-/sys/class/amhdmitx/amhdmitx0/frac_rate_policy"
+/sys/class/amhdmitx/amhdmitx0/frac_rate_policy
+/sys/module/di/parameters/bypass_prog"
 
 for syspath in $syspaths; do
         chgrp -R video $syspath
@@ -63,6 +64,7 @@ case $CODE in
 	exit 0
 	;;
 5)
+	if [ -e /dist_upgrade_wanted ]; then apt-get clean; fi
 	rm /dist_upgrade_wanted
 	vres=$(/bin/fbset | grep geometry | awk '{print $3}')
 	if ((vres<=660))

@@ -10,13 +10,13 @@ INITRAMFS_EMBED=2
 INITRAMFS_NOBUILD=4
 
 . ../common.sh
-test $1 == rbp1 && VERSION="4.9.29" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == rbp2 && VERSION="4.9.29" && REV="14" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp1 && VERSION="4.14.15" && REV="4" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp2 && VERSION="4.14.15" && REV="4" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
 test $1 == vero && VERSION="4.4.0" && REV="18" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == vero2 && VERSION="3.10.105" && REV="9" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="uImage"
+test $1 == vero2 && VERSION="3.10.105" && REV="11" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="uImage"
 test $1 == atv && VERSION="4.2.3" && REV="26" && FLAGS_INITRAMFS=$(($INITRAMFS_NOBUILD)) && IMG_TYPE="zImage"
 test $1 == pc && VERSION="4.2.3" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == vero364 && VERSION="3.14.29" && REV="54" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
+test $1 == vero364 && VERSION="3.14.29" && REV="59" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
 if [ $1 == "rbp1" ] || [ $1 == "rbp2" ] || [ $1 == "atv" ] || [ $1 == "pc" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
@@ -62,6 +62,7 @@ then
 	handle_dep "cpio"
 	handle_dep "bison"
 	handle_dep "flex"
+	handle_dep "rename"
         if [ "$1" == "vero2" ]  || [ "$1" == "vero364" ]
         then
             handle_dep "u-boot-tools"
@@ -117,13 +118,14 @@ then
 			popd
 		fi
 	fi
-	if [ "$IMG_TYPE" == "zImage" ] || [ -z "$IMG_TYPE" ]; then make-kpkg --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
-	if [ "$IMG_TYPE" == "uImage" ]; then make-kpkg --uimage --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
-	if [ $? != 0 ]; then echo "Building kernel image package failed" && exit 1; fi
-	make-kpkg --stem $1 kernel_headers --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
-	if [ $? != 0 ]; then echo "Building kernel headers package failed" && exit 1; fi
-	make-kpkg --stem $1 kernel_source --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
-	if [ $? != 0 ]; then echo "Building kernel source package failed" && exit 1; fi
+	make-kpkg kernel_image kernel_headers
+	#if [ "$IMG_TYPE" == "zImage" ] || [ -z "$IMG_TYPE" ]; then make-kpkg --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
+	#if [ "$IMG_TYPE" == "uImage" ]; then make-kpkg --uimage --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
+	#if [ $? != 0 ]; then echo "Building kernel image package failed" && exit 1; fi
+	#make-kpkg --stem $1 kernel_headers --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
+	#if [ $? != 0 ]; then echo "Building kernel headers package failed" && exit 1; fi
+	#make-kpkg --stem $1 kernel_source --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
+	#if [ $? != 0 ]; then echo "Building kernel source package failed" && exit 1; fi
 	# Make modules directory
 	mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers
 	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]; then mkdir -p ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays; fi

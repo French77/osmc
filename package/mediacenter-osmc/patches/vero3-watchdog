@@ -62,7 +62,10 @@ syspaths="/sys/class/video/axis
 /sys/class/amhdmitx/amhdmitx0/attr
 /sys/class/amhdmitx/amhdmitx0/output_rgb
 /sys/class/amhdmitx/amhdmitx0/config
-/sys/class/amhdmitx/amhdmitx0/aud_output_chs"
+/sys/class/amhdmitx/amhdmitx0/aud_ch
+/sys/class/amhdmitx/amhdmitx0/phy
+/sys/class/leds/led-sys/brightness
+/sys/devices/system/cpu/cpu0/cpufreq"
 
 for syspath in $syspaths; do
         chgrp -R video $syspath
@@ -142,6 +145,7 @@ fi
 while true; do
         if [ -f /home/osmc/.factoryreset ]; then rm -rf /home/osmc/.kodi && rm /home/osmc/.factoryreset; fi
 	if [ -f /tmp/guisettings.restore ]; then mv /tmp/guisettings.restore /home/osmc/.kodi/userdata/guisettings.xml; fi
+	if grep -q "<forcergb>true</force>" /home/osmc/.kodi/userdata/guisettings.xml; then echo 1 > /sys/class/amhdmitx/amhdmitx0/output_rgb; fi
         # clean zero-byte database files that prevent migration/startup
         for file in /home/osmc/.kodi/userdata/Database/*.db; do [ -s $file ] || rm -f $file; done
 	KODI=/usr/lib/kodi/kodi.bin

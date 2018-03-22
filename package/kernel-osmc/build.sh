@@ -10,13 +10,13 @@ INITRAMFS_EMBED=2
 INITRAMFS_NOBUILD=4
 
 . ../common.sh
-test $1 == rbp1 && VERSION="4.14.15" && REV="4" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == rbp2 && VERSION="4.14.15" && REV="4" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp1 && VERSION="4.14.26" && REV="3" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp2 && VERSION="4.14.26" && REV="3" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
 test $1 == vero && VERSION="4.4.0" && REV="18" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == vero2 && VERSION="3.10.105" && REV="11" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="uImage"
+test $1 == vero2 && VERSION="3.10.105" && REV="12" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="uImage"
 test $1 == atv && VERSION="4.2.3" && REV="26" && FLAGS_INITRAMFS=$(($INITRAMFS_NOBUILD)) && IMG_TYPE="zImage"
 test $1 == pc && VERSION="4.2.3" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == vero364 && VERSION="3.14.29" && REV="59" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
+test $1 == vero364 && VERSION="3.14.29" && REV="71" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
 if [ $1 == "rbp1" ] || [ $1 == "rbp2" ] || [ $1 == "atv" ] || [ $1 == "pc" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
@@ -118,14 +118,13 @@ then
 			popd
 		fi
 	fi
-	make-kpkg kernel_image kernel_headers
-	#if [ "$IMG_TYPE" == "zImage" ] || [ -z "$IMG_TYPE" ]; then make-kpkg --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
-	#if [ "$IMG_TYPE" == "uImage" ]; then make-kpkg --uimage --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
-	#if [ $? != 0 ]; then echo "Building kernel image package failed" && exit 1; fi
-	#make-kpkg --stem $1 kernel_headers --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
-	#if [ $? != 0 ]; then echo "Building kernel headers package failed" && exit 1; fi
-	#make-kpkg --stem $1 kernel_source --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
-	#if [ $? != 0 ]; then echo "Building kernel source package failed" && exit 1; fi
+	if [ "$IMG_TYPE" == "zImage" ] || [ -z "$IMG_TYPE" ]; then make-kpkg --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
+	if [ "$IMG_TYPE" == "uImage" ]; then make-kpkg --uimage --stem $1 kernel_image --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV; fi
+	if [ $? != 0 ]; then echo "Building kernel image package failed" && exit 1; fi
+	make-kpkg --stem $1 kernel_headers --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
+	if [ $? != 0 ]; then echo "Building kernel headers package failed" && exit 1; fi
+	make-kpkg --stem $1 kernel_source --append-to-version -${REV}-osmc --jobs $JOBS --revision $REV
+	if [ $? != 0 ]; then echo "Building kernel source package failed" && exit 1; fi
 	# Make modules directory
 	mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers
 	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]; then mkdir -p ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays; fi
@@ -181,8 +180,8 @@ then
 		if [ $? != 0 ]; then echo "Building kernel module failed" && exit 1; fi
 		popd
 		mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
-		strip --strip-unneeded drivers/net/wireless/rtl8812au/8812au.ko
-		cp drivers/net/wireless/rtl8812au/8812au.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
+		strip --strip-unneeded drivers/net/wireless/rtl8812au/*8812au.ko
+		cp drivers/net/wireless/rtl8812au/*8812au.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
 		fi
 		if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "atv" ] || [ "$1" == "vero" ] || [ "$1" == "vero364" ]
 		then
@@ -266,7 +265,7 @@ then
 #                echo "obj-m += videobuf-res.o" >> "linux/drivers/media/v4l2-core/Makefile"
 #                $BUILD VER=${VERSION} SRCDIR=$(pwd)/../
 #                popd
-#                mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/backport#=
+#                mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/backport
 #		cp media_build/v4l/*.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/backport
 #        fi
 	# Unset architecture

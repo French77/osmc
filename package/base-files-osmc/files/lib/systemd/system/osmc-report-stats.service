@@ -1,0 +1,9 @@
+[Unit]
+Description=Report anonymous OSMC install statistics
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/myosmc-report-installs
+
+[Install]
+WantedBy=multi-user.target

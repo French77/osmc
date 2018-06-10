@@ -1,18 +1,18 @@
-From 00a9768ee1ba3b096cb20c17f0dbdf7871d8f748 Mon Sep 17 00:00:00 2001
+From bca025e4c6aaae4a8205c7b3767eaaa7b686c337 Mon Sep 17 00:00:00 2001
 From: Sam Nazarko <email@samnazarko.co.uk>
 Date: Tue, 27 Feb 2018 23:33:31 +0000
 Subject: [PATCH] Vero 4K: add standby support
 
 Signed-off-by: Sam Nazarko <email@samnazarko.co.uk>
 ---
- xbmc/Application.cpp                  | 33 +++++++++++++++++++++++++++++++++
- xbmc/Application.h                    |  5 +++++
- xbmc/network/Network.cpp              |  5 +++++
+ xbmc/Application.cpp                  | 43 +++++++++++++++++++++++++++++++++++
+ xbmc/Application.h                    |  5 ++++
+ xbmc/network/Network.cpp              |  5 ++++
  xbmc/powermanagement/PowerManager.cpp |  4 +++-
- 4 files changed, 46 insertions(+), 1 deletion(-)
+ 4 files changed, 56 insertions(+), 1 deletion(-)
 
 diff --git a/xbmc/Application.cpp b/xbmc/Application.cpp
-index 5fdda85..3974f26 100644
+index 6925404..a7f1ba2 100644
 --- a/xbmc/Application.cpp
 +++ b/xbmc/Application.cpp
 @@ -216,6 +216,7 @@
@@ -23,7 +23,7 @@ index 5fdda85..3974f26 100644
  #endif
  
  #include "cores/FFmpeg.h"
-@@ -4025,6 +4026,9 @@ bool CApplication::WakeUpScreenSaverAndDPMS(bool bPowerOffKeyPressed /* = false
+@@ -4026,6 +4027,9 @@ bool CApplication::WakeUpScreenSaverAndDPMS(bool bPowerOffKeyPressed /* = false
  
  bool CApplication::WakeUpScreenSaver(bool bPowerOffKeyPressed /* = false */)
  {
@@ -33,7 +33,7 @@ index 5fdda85..3974f26 100644
    if (m_iScreenSaveLock == 2)
      return false;
  
-@@ -4129,6 +4133,35 @@ void CApplication::CheckScreenSaverAndDPMS()
+@@ -4130,6 +4134,45 @@ void CApplication::CheckScreenSaverAndDPMS()
    }
  }
  
@@ -62,6 +62,16 @@ index 5fdda85..3974f26 100644
 +  if (m_bVeroStandby)
 +        cpu_governor = "ondemand";
 +  CLog::Log(LOGINFO, "CApplication::ToggleStandby -- governor will now be %s", cpu_governor.c_str());
++  for (int i = 0; i < 4; i++) {
++	std::stringstream ss_govpath;
++	ss_govpath << "/sys/devices/system/cpu/cpu" << i << "/cpufreq/scaling_governor";
++	SysfsUtils::SetString(ss_govpath.str(), cpu_governor);
++  }
++  std::string hpdlock = "hpd_lock1";
++  if (m_bVeroStandby && ! CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOSCREEN_LOCKHPD))
++	hpdlock = "hpd_lock0";
++  CLog::Log(LOGINFO, "CApplication::ToggleStandby -- HPD locking will now be %s", hpdlock.c_str());
++  SysfsUtils::SetString("/sys/class/amhdmitx/amhdmitx0/debug", hpdlock);
 +  m_bVeroStandby = ! m_bVeroStandby; //invert state
 +  return;
 +}

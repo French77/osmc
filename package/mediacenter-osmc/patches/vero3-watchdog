@@ -38,9 +38,7 @@ if [ "$1" = "stop" ]; then
 	exit
 fi
 
-syspaths="/sys/class/video/axis
-/sys/class/video/screen_mode
-/sys/class/video/disable_video
+syspaths="/sys/class/video/
 /sys/class/tsync/pts_pcrscr
 /sys/class/tsync/enable
 /sys/class/audiodsp/digital_raw
@@ -52,9 +50,7 @@ syspaths="/sys/class/video/axis
 /sys/module/amvideo/parameters/omx_pts_interval_lower
 /sys/class/vfm/map
 /dev/video10
-/sys/class/video/blackout_policy
 /sys/module/di/parameters/bypass_all
-/sys/class/video/freerun_mode
 /sys/module/amlvideodri/parameters/freerun_mode
 /sys/class/amhdmitx/amhdmitx0/frac_rate_policy
 /sys/module/di/parameters/bypass_prog
@@ -130,7 +126,7 @@ esac
 
 if [ ! -e /var/run/fb_resolution ]; then
 	/bin/fbset | grep geometry | awk '{print "-xres "$2" -yres "$3" -vxres "$4" -vyres "$5}' > /var/run/fb_resolution
-	cat /sys/class/display/mode >/var/run/fb_mode
+	cat /sys/class/display/mode | head -n 1 >/var/run/fb_mode
 	cat /sys/class/graphics/fb0/free_scale_axis >/var/run/fb_free_scale_axis
 	cat /sys/class/graphics/fb0/window_axis >/var/run/fb_window_axis
 	cat /sys/class/graphics/fb0/scale_width | sed 's/^.*://' >/var/run/fb_scale_width

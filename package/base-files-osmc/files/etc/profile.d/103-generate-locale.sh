@@ -1,3 +1,6 @@
+user=$(whoami)
+if [ "$user" != "osmc" ] && [ -z "$LC_ALL" ] && [ -z "$LANG" ]; then export LANG=C && export LC_ALL=C && return 0; fi
+
 if [ ! -z $LANG ]
 then
     if grep -q "# $LANG" /etc/locale.gen

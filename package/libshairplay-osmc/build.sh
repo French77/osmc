@@ -5,7 +5,7 @@
 
 . ../common.sh
 
-pull_source "https://github.com/juhovh/shairplay/archive/ce80e005908f41d0e6fde1c4a21e9cb8ee54007b.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/juhovh/shairplay/archive/096b61ad14c90169f438e690d096e3fcf87e504e.tar.gz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error downloading" && exit 1; fi
 # Build in native environment
 build_in_env "${1}" $(pwd) "libshairplay-osmc"
@@ -28,6 +28,7 @@ then
 	handle_dep "libtool"
 	handle_dep "libltdl-dev"
 	handle_dep "automake"
+	handle_dep "libavahi-compat-libdnssd-dev"
 	echo "Package: ${1}-libshairplay-osmc" >> files/DEBIAN/control && echo "Package: ${1}-libshairplay-dev-osmc" >> files-dev/DEBIAN/control
 	pushd src/shairplay*
 	./autogen.sh

@@ -22,7 +22,8 @@ OSMC is gelicenseerd onder de GPLv2. Commits naar de OSMC-codebase worden auteur
 Voor hulp en ondersteuning, zie ons blog op <a href="https://osmc.tv">https://osmc.tv</a>. We hebben een discussieforum op <a href="https://discourse.osmc.tv">https://discourse.osmc.tv</a> met een bruisende gemeenschap en enthousiaste gebruikers die elkaar graag willen helpen.
 
 ![Screenshot](https://imgur.com/HE41dK9.png"Screenshot")
-![Screenshot](https://imgur.com/WKvtmz1.png"Screenshot")
+
+
 
 ![label](https://img.shields.io/badge/WedgeCMS-2019.06.1-brightgreen.svg?style=social&label=OSMC-Versie)
 ![label](https://img.shields.io/badge/WedgeCMS-9.9-brightgreen.svg?style=social&label=Debian-Versie)

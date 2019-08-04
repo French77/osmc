@@ -1,65 +1,174 @@
-From 5be22537abd40cec32f099a87411aee87ea0dd57 Mon Sep 17 00:00:00 2001
+From bbe20f787bff3fdb33a600d270d335da2266cff1 Mon Sep 17 00:00:00 2001
 From: Graham Horner <graham@hornercs.co.uk>
-Date: Wed, 12 Jun 2019 15:30:33 +0100
-Subject: [PATCH] 16:9 rendered full-screen when display is 720 wide 4:3
- rendered with postbox
+Date: Wed, 31 Jul 2019 12:53:21 +0100
+Subject: [PATCH] Add aspect ratio switching by AVI infoframe With HDMI AVI
+ setting in globals
 
 ---
- .../cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp | 34 +++++++++++++++++++++-
- 1 file changed, 33 insertions(+), 1 deletion(-)
+ .../resources/strings.po                      |  5 +++++
+ system/settings/settings.xml                  |  1 +
+ xbmc/Application.cpp                          |  1 +
+ .../DVDCodecs/Video/DVDVideoCodecAmlogic.cpp  |  6 +++++
+ .../VideoRenderers/BaseRenderer.cpp           | 22 +++++++++++++++++++
+ xbmc/cores/VideoSettings.h                    |  3 ++-
+ xbmc/utils/AMLUtils.cpp                       |  4 ++++
+ xbmc/windowing/GraphicContext.cpp             |  2 +-
+ xbmc/windowing/amlogic/WinSystemAmlogic.cpp   |  2 ++
+ 9 files changed, 44 insertions(+), 2 deletions(-)
 
-diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-index 9bd4c6c8bd..928538ae60 100644
---- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-+++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/AMLCodec.cpp
-@@ -1547,7 +1547,7 @@ bool CAMLCodec::OpenDecoder(CDVDStreamInfo &hints)
-   // handle video ratio
-   AVRational video_ratio       = av_d2q(1, SHRT_MAX);
-   //if (!hints.forced_aspect)
--  //  video_ratio = av_d2q(hints.aspect, SHRT_MAX);
-+    video_ratio = av_d2q(hints.aspect, SHRT_MAX);
-   am_private->video_ratio      = ((int32_t)video_ratio.num << 16) | video_ratio.den;
-   am_private->video_ratio64    = ((int64_t)video_ratio.num << 32) | video_ratio.den;
+diff --git a/addons/resource.language.en_gb/resources/strings.po b/addons/resource.language.en_gb/resources/strings.po
+index b92f906eb8..e8a8f0363c 100644
+--- a/addons/resource.language.en_gb/resources/strings.po
++++ b/addons/resource.language.en_gb/resources/strings.po
+@@ -2929,6 +2929,11 @@ msgctxt "#636"
+ msgid "Custom"
+ msgstr ""
  
-@@ -2391,6 +2391,38 @@ void CAMLCodec::SetVideoRect(const CRect &SrcRect, const CRect &DestRect)
-     dst_rect.y2 *= 2.0;
-   }
++#: xbmc/video/dialogs/GUIDialogVideoSettings.cpp
++msgctxt "#10636"
++msgid "Use HDMI AVI signalling"
++msgstr "Send 4:3 a/r signal through HDMI"
++
+ msgctxt "#637"
+ msgid "ReplayGain"
+ msgstr ""
+diff --git a/system/settings/settings.xml b/system/settings/settings.xml
+index 24560a00ab..55d41e7595 100755
+--- a/system/settings/settings.xml
++++ b/system/settings/settings.xml
+@@ -87,6 +87,7 @@
+               <option label="634">4</option> <!-- ViewModeStretch16x9 -->
+               <option label="644">7</option> <!-- ViewModeStretch16x9 - nonlinear -->
+               <option label="631">1</option> <!-- ViewModeZoom -->
++              <option label="10636">10</option> <!-- ViewModeHDMIAVI -->
+             </options>
+           </constraints>
+           <control type="list" format="string" />
+diff --git a/xbmc/Application.cpp b/xbmc/Application.cpp
+index 8cfd83e138..8c2b32163a 100644
+--- a/xbmc/Application.cpp
++++ b/xbmc/Application.cpp
+@@ -3041,6 +3041,7 @@ void CApplication::PlaybackCleanup()
+     else
+     {
+       //  resets to res_desktop or look&feel resolution (including refreshrate)
++      SysfsUtils::SetInt("/sys/class/amhdmitx/amhdmitx0/aspect", 2);
+       CServiceBroker::GetWinSystem()->GetGfxContext().SetFullScreenVideo(false);
+     }
+ #ifdef TARGET_DARWIN_IOS
+diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
+index 98d6282ea7..028c31e07c 100644
+--- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
++++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
+@@ -393,6 +393,12 @@ CDVDVideoCodec::VCReturn CDVDVideoCodecAmlogic::GetPicture(VideoPicture* pVideoP
  
-+  /* passthrough non-square pixels if available */
-+  if (m_guiStereoMode == RENDER_STEREO_MODE_OFF &&
-+      video_res_info.iScreenWidth == 720 &&
-+      am_private->video_width <= 720)
+   pVideoPicture->iDisplayWidth  = pVideoPicture->iWidth;
+   pVideoPicture->iDisplayHeight = pVideoPicture->iHeight;
++
++  //set default if there is no other information for TV/DVD modes
++  if (pVideoPicture->iWidth > 0 && pVideoPicture->iWidth != 640 &&
++      pVideoPicture->iWidth <= 720 && m_aspect_ratio < 0.1f)
++      m_aspect_ratio = 16.0f / 9.0f;
++
+   if (m_aspect_ratio > 1.0 && !m_hints.forced_aspect)
+   {
+     pVideoPicture->iDisplayWidth  = ((int)lrint(pVideoPicture->iHeight * m_aspect_ratio)) & ~3;
+diff --git a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.cpp b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.cpp
+index e4900f4649..57b1d5b122 100644
+--- a/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.cpp
++++ b/xbmc/cores/VideoPlayer/VideoRenderers/BaseRenderer.cpp
+@@ -19,7 +19,9 @@
+ #include "guilib/LocalizeStrings.h"
+ #include "utils/log.h"
+ #include "utils/MathUtils.h"
++#include "utils/SysfsUtils.h"
+ #include "cores/VideoPlayer/VideoRenderers/RenderFlags.h"
++#include "xbmc/Application.h"
+ 
+ 
+ CBaseRenderer::CBaseRenderer()
+@@ -118,6 +120,26 @@ void CBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float wid
+ 
+   float outputFrameRatio = inputFrameRatio / CServiceBroker::GetWinSystem()->GetGfxContext().GetResInfo().fPixelRatio;
+ 
++  std::string hdmiAspect;
++  SysfsUtils::GetString("/sys/class/amhdmitx/amhdmitx0/aspect", hdmiAspect);
++  if ((MathUtils::FloatEquals(inputFrameRatio, 4.0f / 3.0f, 0.01f) ||
++      (g_application.GetAppPlayer().IsPaused() &&
++      StringUtils::EndsWith(hdmiAspect, "0x01/0x08"))) &&
++      CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_VIDEOPLAYER_STRETCH43) == ViewModeHDMIAVI)
 +  {
-+    if (dst_rect.Width()/dst_rect.Height() > 1.5f)
-+    {
-+      am_private->video_ratio      = ((int32_t)16 << 16) | 9;
-+      am_private->video_ratio64    = ((int64_t)16 << 32) | 9;
-+    }
-+    else
-+    {
-+      am_private->video_ratio      = ((int32_t)4 << 16) | 3;
-+      am_private->video_ratio64    = ((int64_t)4 << 32) | 3;
-+    }
-+    if (am_private->video_ratio == ((16 << 16) | 9))
-+    {
-+      CLog::Log(LOGDEBUG, "CAMLCodec::SetVideoRect: 16x9");
-+      dst_rect.x1 = dst_rect.y1 = 0;
-+      dst_rect.x2 = 720;
-+      dst_rect.y2 = am_private->video_height;
-+    }
-+    /* TODO: set 4:3 using signalling instead of postboxing */
-+    else if (am_private->video_ratio == ((4 << 16) | 3))
-+    {
-+      CLog::Log(LOGDEBUG, "GFH CAMLCodec::SetVideoRect: 4x3");
-+      dst_rect.x1 = 90;
-+      dst_rect.y1 = 0;
-+      dst_rect.x2 = 630;
-+      dst_rect.y2 = gui.y2;
-+    }
++    CLog::Log(LOGDEBUG, "CBaseRenderer::CalcNormalRenderRect Setting aspect to 4:3");
++    SysfsUtils::SetInt("/sys/class/amhdmitx/amhdmitx0/aspect", 1);
++    outputFrameRatio = ((float) CServiceBroker::GetWinSystem()->GetGfxContext().GetResInfo().iWidth) /
++        ((float) CServiceBroker::GetWinSystem()->GetGfxContext().GetResInfo().iHeight);
 +  }
- #if 1
-   std::string s_dst_rect = StringUtils::Format("%i,%i,%i,%i",
-     (int)dst_rect.x1, (int)dst_rect.y1,
++  else
++  {
++    CLog::Log(LOGDEBUG, "CBaseRenderer::CalcNormalRenderRect Setting aspect to 16:9");
++    if (CServiceBroker::GetWinSystem()->GetGfxContext().GetResInfo().iWidth == 720)
++      outputFrameRatio *= 3.0f / 4.0f;
++    SysfsUtils::SetInt("/sys/class/amhdmitx/amhdmitx0/aspect", 2);
++  }
++
+   // allow a certain error to maximize size of render area
+   float fCorrection = width / height / outputFrameRatio - 1.0f;
+   float fAllowed = CServiceBroker::GetSettingsComponent()->GetSettings()->GetInt(CSettings::SETTING_VIDEOPLAYER_ERRORINASPECT) * 0.01f;
+diff --git a/xbmc/cores/VideoSettings.h b/xbmc/cores/VideoSettings.h
+index bedeb37dcd..d5e4587901 100644
+--- a/xbmc/cores/VideoSettings.h
++++ b/xbmc/cores/VideoSettings.h
+@@ -76,7 +76,8 @@ enum ViewMode
+   ViewModeCustom,
+   ViewModeStretch16x9Nonlin,
+   ViewModeZoom120Width,
+-  ViewModeZoom110Width
++  ViewModeZoom110Width,
++  ViewModeHDMIAVI
+ };
+ 
+ class CVideoSettings
+diff --git a/xbmc/utils/AMLUtils.cpp b/xbmc/utils/AMLUtils.cpp
+index 1881e4078b..ba044c729f 100644
+--- a/xbmc/utils/AMLUtils.cpp
++++ b/xbmc/utils/AMLUtils.cpp
+@@ -446,6 +446,10 @@ bool aml_mode_to_resolution(const char *mode, RESOLUTION_INFO *res)
+   res->bFullScreen   = true;
+   res->iSubtitles    = (int)(0.965 * res->iHeight);
+   res->fPixelRatio   = 1.0f;
++  if (res->iHeight == 576)
++    res->fPixelRatio = 16.0f / 15.0f;
++  if (res->iHeight == 480)
++    res->fPixelRatio = 8.0f / 9.0f;
+   res->strId         = fromMode;
+   res->strMode       = StringUtils::Format("%dx%d @ %.2f%s - Full Screen", res->iScreenWidth, res->iScreenHeight, res->fRefreshRate,
+     res->dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "");
+diff --git a/xbmc/windowing/GraphicContext.cpp b/xbmc/windowing/GraphicContext.cpp
+index 1ced49671b..8b056f6ee3 100644
+--- a/xbmc/windowing/GraphicContext.cpp
++++ b/xbmc/windowing/GraphicContext.cpp
+@@ -349,7 +349,7 @@ void CGraphicContext::SetFullScreenVideo(bool bOnOff)
+     }
+   }
+   else
+-    SetVideoResolution(RES_WINDOW, false);
++    SetVideoResolution(RES_DESKTOP, false);
+ }
+ 
+ bool CGraphicContext::IsFullScreenVideo() const
+diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
+index d6f8ec1753..efd603803b 100644
+--- a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
++++ b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
+@@ -353,6 +353,8 @@ void CWinSystemAmlogic::UpdateResolutions()
+ 
+   if (curDesktopSetting == "DESKTOP")
+     curDesktopSetting = curResolution;
++  else if (curDesktopSetting.length() == 24)
++    curDesktopSetting = StringUtils::Right(curDesktopSetting, 23);
+ 
+   CLog::Log(LOGNOTICE, "Current display setting is %s", curDesktopSetting.c_str());
+   CLog::Log(LOGNOTICE, "Current output resolution is %s", curResolution.c_str());
 -- 
-2.11.0
+2.17.1
 

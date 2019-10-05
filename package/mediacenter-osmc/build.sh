@@ -6,7 +6,7 @@
 . ../common.sh
 if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "pc" ] || [ "$1" == "vero2" ] || [ "$1" == "vero3" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/89472b7d690922366bbff5ba47d077f82a9f0ec1.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/xbmc/xbmc/archive/3ade758ceb0f8fe6d0cb7f2dcd758c873c80cb1f.tar.gz" "$(pwd)/src"
 API_VERSION="18"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
@@ -335,11 +335,11 @@ then
         ADDONS_AUDIO_ENCODERS="audioencoder.flac audioencoder.lame audioencoder.vorbis audioencoder.wav"
         ADDONS_INPUTSTREAM="inputstream.mpd inputstream.adaptive inputstream.rtmp"
 	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick imagedecoder.raw peripheral.steamcontroller"
-	ADDONS_PVR="pvr.sledovanitv.cz pvr.argustv pvr.mythtv pvr.hts pvr.pctv pvr.stalker pvr.filmon pvr.octonet pvr.zattoo pvr.vbox pvr.wmc pvr.nextpvr pvr.njoy pvr.teleboy pvr.vdr.vnsi pvr.vuplus pvr.dvbviewer pvr.dvblink pvr.hdhomerun pvr.iptvsimple pvr.demo pvr.mediaportal.tvserver"
+	ADDONS_PVR="pvr.sledovanitv.cz pvr.argustv pvr.mythtv pvr.hts pvr.pctv pvr.stalker pvr.filmon pvr.octonet pvr.zattoo pvr.vbox pvr.wmc pvr.nextpvr pvr.njoy pvr.teleboy pvr.vdr.vnsi pvr.vuplus pvr.dvbviewer pvr.dvblink pvr.hdhomerun pvr.iptvsimple pvr.demo pvr.mediaportal.tvserver pvr.waipu"
 	#ADDONS_SCREENSAVERS="screensaver.biogenesis screensaver.greynetic screensaver.matrixtrails screensaver.pingpong screensaver.pyro screensaver.stars screensaver.shadertoy"
 	ADDONS_VFS="vfs.libarchive vfs.rar vfs.sftp"
         #ADDONS_VISUALIZATIONS="visualization.fishbmc visualization.goom visualization.projectm visualization.shadertoy visualization.spectrum visualization.vsxu visualization.waveform"
-	ADDONS_GAME="game.libretro game.libretro.2048 game.libretro.beetle-gba game.libretro.fceumm game.libretro.gw game.libretro.beetle-pce-fast game.libretro.bnes game.libretro.nestopia game.libretro.bsnes-mercury-balanced game.libretro.mame2000 game.libretro.mame2003 game.libretro.bluemsx game.libretro.vecx game.libretro.mame2003_plus game.libretro.gambatte game.libretro.beetle-bsnes game.libretro.meteor game.libretro.mgba game.libretro.vba-next game.libretro.quicknes game.libretro.scummvm game.libretro.snes9x game.libretro.stella game.libretro.dosbox game.libretro.vbam game.libretro.yabause game.libretro.genplus"
+	ADDONS_GAME="game.libretro game.libretro.2048 game.libretro.beetle-gba game.libretro.fceumm game.libretro.gw game.libretro.beetle-pce-fast game.libretro.bnes game.libretro.nestopia game.libretro.bsnes-mercury-balanced game.libretro.mame2000 game.libretro.mame2003 game.libretro.bluemsx game.libretro.vecx game.libretro.mame2003_plus game.libretro.gambatte game.libretro.beetle-bsnes game.libretro.meteor game.libretro.mgba game.libretro.vba-next game.libretro.quicknes game.libretro.scummvm game.libretro.snes9x game.libretro.stella game.libretro.dosbox game.libretro.vbam game.libretro.genplus"
 	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
 	then
 	    ADDONS_TO_BUILD="${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME}"

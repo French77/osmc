@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 DICT OF ITEMS IN CONFIG WHICH AFFECT THIS KODI SETTING
 
@@ -35,7 +37,7 @@ NEEDS A FINAL CHECK FOR HDMI_SAFE to make sure the entries related to it are rem
 """
 
 import re
-
+import sys
 
 def config_to_kodi(MASTER_SETTINGS, config):
     """ Takes the existing config and uses the protocols in the MASTER_SETTINGS to extract the settings
@@ -45,11 +47,31 @@ def config_to_kodi(MASTER_SETTINGS, config):
 
     extracted_settings_for_kodi = {}
 
-    for setting, protocols in MASTER_SETTINGS.iteritems():
+    # print "==--==--"*20
+    # print "Settings being extracted from config.txt"
+    # print "==--==--"*20
 
+    for setting, protocols in MASTER_SETTINGS.iteritems():
+        
         value = general_config_get(config, **protocols)
+        
+        # print "%s: %s" % (setting, value)
 
         extracted_settings_for_kodi[setting] = value
+
+        # print "Setting"
+    # print "==--==--"*20
+
+    # The gpio_pin_in has a default value of 17 when the lirc-rpi overlay is present.
+    # Some configs may not report a gpio_in_pin for this reason.
+    # We must presume if the lirc-rpi overlay is found that the gpio_pin setting
+    # in kodi should be set at 17.
+    lirc_is_present = extracted_settings_for_kodi['lirc-rpi-overlay'] != 'defunct'
+    gpio_in_pin_is_not_present = extracted_settings_for_kodi['gpio_in_pin'] == 'defunct'
+    gpio_pin_is_not_present = extracted_settings_for_kodi['gpio_pin'] == '0'
+    if lirc_is_present & gpio_in_pin_is_not_present & gpio_pin_is_not_present:
+        extracted_settings_for_kodi['gpio_pin'] = '17'
+
     return extracted_settings_for_kodi
 
 
@@ -112,13 +134,33 @@ def kodi_to_config(MASTER_SETTINGS, config, new_settings):
 
         Returns a brand new config (list of lines)"""
 
-    for setting, new_value in new_settings.iteritems():
+    # print "==--==--"*20 
+
+    # print "Settings being sent to config.txt"
+
+    # print "==--==--"*20
+
+    # It is vital for gpio-ir entry to come AFTER the gpio-ir-overlay entry,
+    # as the overlay entry is simply there to pick up legacy entries and eliminate
+    # them. The non-overlay entry is the one used to put them back into the config.txt
+    # file. Dictionaries aren't order in python 2, so we have to do the ordering
+    # using a sorted list of keys. (!!!!) 
+    new_setting_keys = new_settings.keys()
+    new_setting_keys.sort()
+
+    for setting in new_setting_keys:
+        new_value = new_settings[setting]
+
+        # print "%s: %s" % (setting, new_value)
 
         setting_protocols = MASTER_SETTINGS.get(setting, None)
 
-        if setting_protocols == None:
+        if setting_protocols is None:
+            # print "No setting protocol for %s" % setting
             continue
+        # print "RUNNING CONFIG SET FOR %s" % setting
         config = general_config_set(config, new_settings, new_value, **setting_protocols)
+
     return config
 
 
@@ -145,24 +187,23 @@ def general_config_set(
     # pass the new_value through the config_set protocol to prepare it for inclusion in the config.txt
     new_value = config_set(new_value, new_settings)
 
-    # print(config)
-    # print(config[::-1])
+    # print config
+    # print " \n"
 
     # the original config is run through backwards so that the last setting of any duplicates is kept
     for line in config[::-1]:
 
-        # print('---')
-        # print('subject line : %s ' % line.strip())
+        # print 'Examining line : %s ' % line.strip()
 
         # pass blank lines straight through
         if not line.strip():
             new_config.append(line)
-            # print('passed through blank')
+            # print '\tLine is passed through as it is blank'
             continue
         # pass commented out lines straight through
         if line.strip().startswith("#"):
             new_config.append(line)
-            # print('passed through comment')
+            # print '\tLine is passed through as it is a comment'
             continue
         # ignore inline comments on the line
         try:
@@ -173,44 +214,48 @@ def general_config_set(
             comment = ""
         line_matches = False
 
-        for pair in config_get_patterns:
+        for i, pair in enumerate(config_get_patterns):
 
             matched = re.search(pair["identify"], cf_line, re.IGNORECASE)
 
-            # print('attempting match: %s' % pair['identify'])
+            # print '\tAttempting to match line to pattern %s' % i
 
             if matched:
 
                 line_matches = True
 
-                # print('found')
+                # print '\t\t match found'
 
                 # if a match happens but the value is 'remove_this_line', then dont add the line to the
                 # new config.txt
                 if new_value == "remove_this_line":
-                    # print('setting to remove')
+                    # print '\t\tSetting value says to remove this line'
                     continue
                 # if the value has been set already, then comment out this line
                 if already_set:
 
                     # comment out any duplicated entries (this could be changed to removal if we want)
                     new_config.append("#" + line.replace("\n", "") + " # DUPLICATE")
-                    # print('alreadyset')
+                    # print '\t\tSetting has already been set, skipping subsequent matches and marking as DUPLICATE'
                     continue
                 # otherwise update the line
                 new_config.append(setting_stub % new_value + "  %s" % comment)
-                # print('updated value')
+                # print '\tLine has been update with the new value: %s' % new_value
                 already_set = True
         # if no match actually occured then pass the line through to the new config
         if not line_matches:
             new_config.append(line)
-            # print('passed through unmatched')
+            # print '\t-- NO MATCH --'
     # flip the config back around the other way, so new entries are added at the end
     new_config = new_config[::-1]
 
     if not already_set and new_value != "remove_this_line":
-        new_config.append(setting_stub % new_value)
-    # print(new_config)
+        # print "Failed to find matched line in existing config, so adding a new line"
+        new_line = setting_stub % new_value
+        new_config.append(new_line)
+        # print "\tNew line added: %s" % (setting_stub % new_value)
+        # print "\tLines now read:"
+        # for x in new_config: print "\t\t - %s" % x
 
     return new_config
 
@@ -973,20 +1018,7 @@ MASTER_SETTINGS = {
         "already_set": False,
         "setting_stub": "",
     },
-    "gpio_in_pin": {
-        "default": {"function": None, "value": "defunct"},
-        "config_get_patterns": [
-            {
-                "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=",
-                "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=\s*(\w*)",
-            }
-        ],
-        "config_set": legacy_gpio_removal,
-        "config_validation": blank_check_validation,
-        "kodi_set": generic_passthrough_kodi_set,
-        "already_set": False,
-        "setting_stub": "",
-    },
+
     "gpio_in_pull": {
         "default": {"function": None, "value": "defunct"},
         "config_get_patterns": [
@@ -1003,7 +1035,7 @@ MASTER_SETTINGS = {
     },
     "gpio-ir-overlay": {
         # This group looks for the new gpio-ir setting and deletes it when found.
-        # The gpio_out_pin or gpio_pin settings control whether dtoverlay=gpio-ir
+        # The gpio_in_pin or gpio_pin settings control whether dtoverlay=gpio-ir
         # is added to the config.txt.
         "default": {"function": None, "value": "defunct"},
         "config_get_patterns": [
@@ -1019,11 +1051,25 @@ MASTER_SETTINGS = {
         "setting_stub": "",
     },
     "gpio_out_pin": {
-        "default": {"function": None, "value": "17"},
+        "default": {"function": None, "value": "defunct"},
         "config_get_patterns": [
             {
                 "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_out_pin[-\w\d]*=",
                 "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_out_pin[-\w\d]*=\s*(\w*)",
+            }
+        ],
+        "config_set": legacy_gpio_removal,
+        "config_validation": blank_check_validation,
+        "kodi_set": generic_passthrough_kodi_set,
+        "already_set": False,
+        "setting_stub": "",
+    },
+    "gpio_in_pin": {
+        "default": {"function": None, "value": "defunct"},
+        "config_get_patterns": [
+            {
+                "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=",
+                "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=\s*(\w*)",
             }
         ],
         "config_set": legacy_gpio_removal,  # Coming from Kodi to the config.txt
@@ -1039,9 +1085,9 @@ MASTER_SETTINGS = {
                 "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:gpio-ir:)?.*gpio_pin[-\w\d]*=",
                 "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:gpio-ir:)?.*gpio_pin[-\w\d]*=\s*(\w*)",
             },
-            {  # Legacy pin out extraction
-                "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_out_pin[-\w\d]*=",
-                "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_out_pin[-\w\d]*=\s*(\w*)",
+            {  # Legacy pin in extraction
+                "identify": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=",
+                "extract": r"\s*(?:dtoverlay|device_tree_overlay|dtparam|dtparams|device_tree_param|device_tree_params)\s*=(?:lirc-rpi:)?.*gpio_in_pin[-\w\d]*=\s*(\w*)",
             },
         ],
         "config_set": gpio_pin_config_set,
@@ -1065,6 +1111,9 @@ def write_config_file(location, new_config):
     new_config = [
         x + "\n" if not x.endswith("\n") else x for x in new_config if "remove_this_line" not in x
     ]
+    # print "J" * 50
+    # print new_config
+    # print "J" * 50
 
     with open(location, "w") as f:
         f.writelines(new_config)
@@ -1101,59 +1150,11 @@ def clean_config(config, patterns):
 
 if __name__ == "__main__":
 
-    """@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    import subprocess
 
-        Anything in here is only run when the script is called directly rather than imported
-
-        I use this section for testing only.
-
-       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ """
-
-    def testing():
-        config = read_config_file("C:\\temp\\config.txt")
-
-        ccfg = clean_config(config, patterns=[])
-
-        # for x in ccfg:
-        #     print(x)
-
-        extracted_settings = config_to_kodi(MASTER_SETTINGS, ccfg)
-
-        # for x in extracted_settings.items():
-        #     print(x)
-
-        new_settings = kodi_to_config(MASTER_SETTINGS, config, extracted_settings)
-
-        for x in new_settings:
-            pass
-            # print(x)
-
-    possible_results_from_kodi = {
-        "config_hdmi_boost": [str(x) for x in range(0, 12)],
-        "decode_MPG2": ["", "something"],
-        "decode_WVC1": ["", "something"],
-        "display_rotate": [str(x) for x in range(0, 6)],
-        # 'gpio_in_pin'           : [str(x) for x in range(1,26)], DEPRECATED
-        # 'gpio_out_pin'          : [str(x) for x in range(1,26)], REPLACED
-        "gpio_pin": [str(x) for x in range(0, 26)],
-        # 'gpio_in_pull'          : [str(x) for x in range(0,3)], DEPRECATED
-        "gpu_mem_1024": [str(x) for x in range(16, 321)],
-        "gpu_mem_512": [str(x) for x in range(16, 257)],
-        "gpu_mem_256": [str(x) for x in range(16, 193)],
-        "hdmi_group": [str(x) for x in range(0, 3)],
-        "hdmi_ignore_cec": ["false", "true"],
-        "hdmi_ignore_cec_init": ["false", "true"],
-        "hdmi_ignore_edid": ["false", "true"],
-        "hdmi_mode": [str(x) for x in range(0, 87)],
-        "hdmi_pixel_encoding": [str(x) for x in range(0, 5)],
-        "hdmi_safe": ["false", "true"],
-        # 'lirc-rpi-overlay'      : ['false','true'], DEPRECATED
-        "sdtv_aspect": [str(x) for x in range(0, 4)],
-        "sdtv_mode": [str(x) for x in range(0, 4)],
-        "soundcard_dac": [str(x) for x in range(0, 7)],
-        "spi-bcm2835-overlay": ["false", "true"],
-        "store_hdmi_to_file": ["false", "true"],
-        "w1gpio": [str(x) for x in range(0, 3)],
-    }
-
-    testing()
+    config = read_config_file('/boot/config.txt')
+    original_config = config[::]
+    extracted_settings = config_to_kodi(MASTER_SETTINGS, config)
+    new_settings = kodi_to_config(MASTER_SETTINGS, original_config, extracted_settings)
+    write_config_file('/var/tmp/config.txt', new_settings)
+    subprocess.call(["sudo", "mv",  '/var/tmp/config.txt', '/boot/config.txt'])

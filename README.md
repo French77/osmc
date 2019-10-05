@@ -4,7 +4,7 @@ OSMC (Open Source Media Center) is een gratis en open source mediaspeler op basi
 
 #### Bron Code ####
 
-Upstream broncode voor OSMC is te vinden op https://github.com/osmc/osmc. Je kunt deze repository klonen met het commando 'git clone'. U kunt hier e.v.t leren hoe een ontwikkelomgeving op te zettten <a href="https://osmc.tv/wiki/development/getting-involved-with-osmc-development/">hier</a>.
+Upstream broncode voor OSMC is te vinden op https://github.com/osmc/osmc. Je kunt deze repository klonen met het commando 'git clone'. U kunt <a href="https://osmc.tv/wiki/development/getting-involved-with-osmc-development/">hier</a>. e.v.t leren hoe een ontwikkelomgeving op te zettten 
 
 #### Download ####
 

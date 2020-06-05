@@ -6,7 +6,7 @@
 . ../common.sh
 if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "pc" ] || [ "$1" == "vero2" ] || [ "$1" == "vero3" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/8e967df9218279618bcbfa8a898d8f80f7b4e449.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/xbmc/xbmc/archive/8f9ff4c11f7f8acdf609484d61b82b25f875c21a.tar.gz" "$(pwd)/src"
 API_VERSION="18"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
@@ -216,8 +216,7 @@ then
 	fi
 	if [ "$1" == "rbp2" ]
 	then
-		CPU="cortex-a7"
-		COMPFLAGS="-mcpu=cortex-a7 -mtune=cortex-a7 -mfloat-abi=hard -O3 -mfpu=neon-vfpv4 -fomit-frame-pointer "
+               COMPFLAGS="-march=armv7-a -mfloat-abi=hard -O3 -mfpu=neon-vfpv4 -fomit-frame-pointer "
 	fi
 	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]; then
 	LIBRARY_PATH+=/opt/vc/lib && \
@@ -240,7 +239,6 @@ then
             -DCORE_SYSTEM_NAME=linux \
             -DCORE_PLATFORM_NAME=rbpi \
             -DWITH_ARCH=arm \
-            -DWITH_CPU=${CPU} \
             -DENABLE_APP_AUTONAME=OFF \
             -DENABLE_INTERNAL_FMT=ON \
             -DENABLE_INTERNAL_FLATBUFFERS=ON \
@@ -274,7 +272,6 @@ then
             -DENABLE_OPTICAL=1 \
             -DENABLE_DVDCSS=1 \
             -DWITH_ARCH=arm \
-            -DWITH_CPU="cortex-a5" \
             -DCORE_PLATFORM_NAME=aml \
             -DCORE_SYSTEM_NAME=linux \
             -DENABLE_APP_AUTONAME=OFF \
@@ -331,29 +328,30 @@ then
 	pushd cmake/addons/
 	mkdir build
 	cd build
-        #ADDONS_AUDIO_DECODERS="audiodecoder.modplug audiodecoder.nosefart audiodecoder.sidplay audiodecoder.snesapu"
+        ADDONS_AUDIO_DECODERS="audiodecoder.timidity audiodecoder.modplug audiodecoder.nosefart audiodecoder.sidplay audiodecoder.snesapu"
         ADDONS_AUDIO_ENCODERS="audioencoder.flac audioencoder.lame audioencoder.vorbis audioencoder.wav"
         ADDONS_INPUTSTREAM="inputstream.mpd inputstream.adaptive inputstream.rtmp"
-	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick imagedecoder.raw peripheral.steamcontroller"
+	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick peripheral.steamcontroller"
 	ADDONS_PVR="pvr.sledovanitv.cz pvr.argustv pvr.mythtv pvr.hts pvr.pctv pvr.stalker pvr.filmon pvr.octonet pvr.zattoo pvr.vbox pvr.wmc pvr.nextpvr pvr.njoy pvr.teleboy pvr.vdr.vnsi pvr.vuplus pvr.dvbviewer pvr.dvblink pvr.hdhomerun pvr.iptvsimple pvr.demo pvr.mediaportal.tvserver pvr.waipu"
 	#ADDONS_SCREENSAVERS="screensaver.biogenesis screensaver.greynetic screensaver.matrixtrails screensaver.pingpong screensaver.pyro screensaver.stars screensaver.shadertoy"
 	#ADDONS_SCREENSAVERS="screensaver.shadertoy screensaver.spectrum screensaver.waveform"
-	ADDONS_VFS="vfs.libarchive vfs.rar vfs.sftp"
+	ADDONS_VFS="vfs.libarchive vfs.rar vfs.sftp vfs.sacd"
         #ADDONS_VISUALIZATIONS="visualization.fishbmc visualization.goom visualization.projectm visualization.shadertoy visualization.spectrum visualization.vsxu visualization.waveform"
 	ADDONS_GAME="game.libretro game.libretro.2048 game.libretro.beetle-gba game.libretro.fceumm game.libretro.gw game.libretro.beetle-pce-fast game.libretro.bnes game.libretro.nestopia game.libretro.bsnes-mercury-balanced game.libretro.mame2000 game.libretro.mame2003 game.libretro.bluemsx game.libretro.vecx game.libretro.mame2003_plus game.libretro.gambatte game.libretro.beetle-bsnes game.libretro.meteor game.libretro.mgba game.libretro.vba-next game.libretro.quicknes game.libretro.scummvm game.libretro.snes9x game.libretro.stella game.libretro.dosbox game.libretro.vbam game.libretro.genplus"
+	ADDONS_IMAGE_DECODERS="imagedecoder.raw imagedecoder.mpo"
 	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
 	then
-	    ADDONS_TO_BUILD="${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME}"
+	    ADDONS_TO_BUILD="${ADDONS_AUDIO_DECODERS} ${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME} ${ADDONS_IMAGE_DECODERS}"
 	    PLATFORM="-DCMAKE_INCLUDE_PATH=/opt/vc/include:/opt/vc/include/interface:/opt/vc/include/interface/vcos/pthreads:/opt/vc/include/interface/vmcs_host/linux -DCMAKE_LIBRARY_PATH=/opt/vc/lib"
 	fi
 	if [ "$1" == "vero2" ]
 	then
-	   ADDONS_TO_BUILD="${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME}"
+	   ADDONS_TO_BUILD="${ADDONS_AUDIO_DECODERS} ${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME} ${ADDONS_IMAGE_DECODERS}"
 	   PLATFORM="-DCMAKE_INCLUDE_PATH=/opt/vero2/include -DCMAKE_LIBRARY_PATH=/opt/vero2/lib"
 	fi
 	if [ "$1" == "vero3" ]
 	then
-	   ADDONS_TO_BUILD="${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME}"
+	   ADDONS_TO_BUILD="${ADDONS_AUDIO_DECODERS} ${ADDONS_AUDIO_ENCODERS} ${ADDONS_INPUTSTREAM} ${ADDONS_PERIPHERAL} ${ADDONS_PVR} ${ADDONS_SCREENSAVERS} ${ADDONS_VFS} ${ADDONS_VISUALIZATIONS} ${ADDONS_GAME} ${ADDONS_IMAGE_DECODERS}"
 	   PLATFORM="-DCMAKE_INCLUDE_PATH=/opt/vero3/include -DCMAKE_LIBRARY_PATH=/opt/vero3/lib"
 	fi
 	if [ "$1" == "pc" ]

@@ -31,7 +31,7 @@ done
 # Configure the target directory
 ARCH="armhf"
 DIR="opt/osmc-tc/${tcstub}"
-RLS="stretch"
+RLS="buster"
 URL="http://mirrordirector.raspbian.org/raspbian"
 
 # Remove existing build
@@ -50,12 +50,11 @@ configure_filesystem "${DIR}"
 verify_action
 
 # Enable networking
-enable_nw_chroot "${DIR}"
+configure_build_env_nw "${DIR}"
 verify_action
 
 # Set up sources.list
 echo "deb http://mirrordirector.raspbian.org/raspbian $RLS main contrib non-free
-deb http://apt.osmc.tv $RLS-devel main
 " > ${DIR}/etc/apt/sources.list
 
 # Performing chroot operation
@@ -68,6 +67,8 @@ verify_action
 echo -e "Installing packages"
 chroot ${DIR} apt-get -y install --no-install-recommends $CHROOT_PKGS
 verify_action
+echo -e "Adding OSMC repository"
+echo "deb http://apt.osmc.tv $RLS-devel main" >> ${DIR}/etc/apt/sources.list
 echo -e "Configuring ccache"
 configure_ccache "${DIR}"
 verify_action

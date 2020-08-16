@@ -27,7 +27,7 @@ done
 # Configure the target directory
 ARCH="armhf"
 DIR="$filestub/"
-RLS="stretch"
+RLS="buster"
 URL="http://mirrordirector.raspbian.org/raspbian"
 
 # Remove existing build
@@ -47,7 +47,7 @@ configure_filesystem "${DIR}"
 verify_action
 
 # Enable networking
-enable_nw_chroot "${DIR}"
+configure_build_env_nw "${DIR}"
 verify_action
 
 # Set up sources.list

@@ -5,7 +5,7 @@
 
 . ../common.sh
 
-VERSION="fe132af7f85fd03a353eec1ec5f8cd8f6a72e191"
+VERSION="b4a1539d2c1e941f74b64256d40966e02bb7ab39"
 pull_source "https://github.com/osmc/udisks-osmc/archive/${VERSION}.tar.gz" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error fetching udisks source" && exit 1; fi
 # Build in native environment
@@ -25,9 +25,8 @@ then
 	handle_dep "libdbus-1-dev"
 	handle_dep "libgudev-1.0-dev"
 	handle_dep "libpolkit-gobject-1-dev"
-	handle_dep "libparted0-dev"
+	handle_dep "libparted-dev"
 	handle_dep "libdevmapper-dev"
-	handle_dep "liblvm2-dev"
 	handle_dep "libatasmart-dev"
 	handle_dep "libsgutils2-dev"
 	handle_dep "zlib1g-dev"
@@ -39,7 +38,7 @@ then
 	echo "Package: ${1}-udisks-osmc" >> files/DEBIAN/control
 	pushd src/udisks-osmc-${VERSION}
     	install_patch "../../patches" "all"
-	./configure --prefix=/usr --enable-man-pages=no --with-systemdsystemunitdir=/lib/systemd/system --disable-dmmp --enable-lvm2 --libexecdir=/usr/lib/udisks --sysconfdir=/etc
+	./configure --prefix=/usr --enable-man-pages=no --with-systemdsystemunitdir=/lib/systemd/system --disable-dmmp --libexecdir=/usr/lib/udisks --sysconfdir=/etc
 	if [ $? != 0 ]; then echo -e "Configure failed!" && umount /proc/ > /dev/null 2>&1 && exit 1; fi
 	$BUILD
 	if [ $? != 0 ]; then echo -e "Build failed!" && exit 1; fi

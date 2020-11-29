@@ -12,11 +12,12 @@ INITRAMFS_NOBUILD=4
 
 . ../common.sh
 test $1 == rbp1 && VERSION="4.19.122" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == rbp2 && VERSION="4.19.122" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp2 && VERSION="5.9.6" && REV="1" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
+test $1 == rbp464 && VERSION="5.9.6" && REV="1" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
 test $1 == vero2 && VERSION="3.10.105" && REV="13" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="uImage"
 test $1 == pc && VERSION="4.2.3" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage"
-test $1 == vero364 && VERSION="3.14.29" && REV="159" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
-if [ $1 == "rbp1" ] || [ $1 == "rbp2" ] || [ $1 == "pc" ]
+test $1 == vero364 && VERSION="4.9.113" && REV="26" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage"
+if [ $1 == "rbp1" ] || [ $1 == "rbp2" ] || [ $1 == "rbp464" ] || [ $1 == "pc" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
 	MAJOR=$(echo ${VERSION:0:1})
@@ -29,7 +30,7 @@ then
 	SOURCE_LINUX="https://www.kernel.org/pub/linux/kernel/v${MAJOR}.x/linux-${DL_VERSION}.tar.xz"
 fi
 if [ $1 == "vero2" ]; then SOURCE_LINUX="https://github.com/osmc/vero2-linux/archive/master.tar.gz"; fi
-if [ $1 == "vero364" ]; then SOURCE_LINUX="https://github.com/osmc/vero3-linux/archive/master.tar.gz"; fi
+if [ $1 == "vero364" ]; then SOURCE_LINUX="https://github.com/osmc/vero3-linux/archive/osmc-openlinux-4.9.tar.gz"; fi
 pull_source "${SOURCE_LINUX}" "$(pwd)/src"
 # We need to download busybox and e2fsprogs here because we run initramfs build within chroot and can't pull_source in a chroot
 if ((($FLAGS_INITRAMFS & $INITRAMFS_NOBUILD) != $INITRAMFS_NOBUILD))
@@ -61,7 +62,7 @@ then
 	handle_dep "cpio"
 	handle_dep "bison"
 	handle_dep "flex"
-	handle_dep "rename"
+	handle_dep "rsync"
         if [ "$1" == "vero2" ]  || [ "$1" == "vero364" ]
         then
 	    handle_dep "python"
@@ -71,11 +72,19 @@ then
 	export KPKG_EMAIL="email@samnazarko.co.uk"
 	JOBS=$(if [ ! -f /proc/cpuinfo ]; then mount -t proc proc /proc; fi; cat /proc/cpuinfo | grep processor | wc -l && umount /proc/ >/dev/null 2>&1)
 	pushd src/*linux*
-	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
+	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "rbp464" ]
 	then
 		install_patch "../../patches" "rbp"
 	fi
 	install_patch "../../patches" "${1}"
+        if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "rbp464" ]
+        then
+                # We have to do this here separately because we need .config present first
+                ./scripts/config --set-val CONFIG_ARM64_TLB_RANGE y
+                ./scripts/config --set-val ARM64_PTR_AUTH y
+                ./scripts/config --set-val CONFIG_KASAN n
+                ./scripts/config --set-val CONFIG_KCOV n
+        fi
 	# Set up DTC
 	$BUILD scripts
 	DTC=$(pwd)"/scripts/dtc/dtc"
@@ -85,10 +94,8 @@ then
 		$BUILD meson8b_vero2.dtd
 		$BUILD meson8b_vero2.dtb
 	fi
-	if [ "$1" == "vero364" ]
+	if [ "$1" == "vero364" ] || [ "$1" == "rbp464" ]
 	then
-		# Debian Jessie has an ancient version of make-kpkg without arm64 definitions
-		# So let's manually set up architectures.mk here and remove when Stretch arrives
 		export kimage=vmlinuz
 		export target=Image.gz
 		export NEED_DIRECT_GZIP_IMAGE=YES
@@ -96,8 +103,11 @@ then
 		export kimagedest=$(pwd)/vmlinuz
 		export kelfimagedest=$(pwd)/vmlinux
 		export KERNEL_ARCH=arm64
-		$BUILD vero3_2g_16g.dtb || vero3_2g_16g.dtb
-		$BUILD vero3plus_2g_16g.dtb || vero3plus_2g_16g.dtb
+	fi
+        if [ "$1" == "vero364" ]
+	then
+		$BUILD vero3_2g_16g.dtb || $BUILD vero3_2g_16g.dtb
+		$BUILD vero3plus_2g_16g.dtb || $BUILD vero3plus_2g_16g.dtb
 	fi
 	# Initramfs time
 	if ((($FLAGS_INITRAMFS & $INITRAMFS_NOBUILD) != $INITRAMFS_NOBUILD))
@@ -127,16 +137,16 @@ then
 	if [ $? != 0 ]; then echo "Building kernel source package failed" && exit 1; fi
 	# Make modules directory
 	mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers
-	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]; then mkdir -p ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays; fi
+	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "rbp464" ]; then mkdir -p ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays; fi
 	if [ "$1" == "vero2" ]; then mkdir -p ../../files-image/boot; fi
-	if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
-	then
-		$BUILD dtbs
-		mv arch/arm/boot/dts/*.dtb ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/
-		rename -v 's/\.dtbo$/\-overlay.dtb/' arch/arm/boot/dts/overlays/*.dtbo
-		mv arch/arm/boot/dts/overlays/*.dtb ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays
-		mv arch/arm/boot/dts/overlays/README ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays
-	fi
+        if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "rbp464" ]
+        then
+                $BUILD dtbs
+                mv arch/arm/boot/dts/*.dtb ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/
+                mv arch/arm64/boot/dts/broadcom/*.dtb ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/
+                mv arch/arm*/boot/dts/overlays/*.dtbo ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays
+                mv arch/arm/boot/dts/overlays/README ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays
+        fi
 	if [ "$1" == "vero" ]
 	then
 		make imx6dl-vero.dtb
@@ -171,7 +181,7 @@ then
 	if [ $ARCH == "i686" ]; then ARCH="i386"; fi
 	if [ "$1" == "vero364" ]; then ARCH=arm64; fi
 	export ARCH
-		if [ "$1" == "vero2" ] || [ "$1" == "vero364" ]
+		if [ "$1" == "vero2" ]
 		then
 		# Build RTL8812AU module
 		pushd drivers/net/wireless/rtl8812au
@@ -181,17 +191,6 @@ then
 		mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
 		strip --strip-unneeded drivers/net/wireless/rtl8812au/*8812au.ko
 		cp drivers/net/wireless/rtl8812au/*8812au.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
-		fi
-		if [ "$1" == "vero364" ]
-		then
-		# Build RTL8192CU module
-		pushd drivers/net/wireless/rtl8192cu
-		$BUILD
-		if [ $? != 0 ]; then echo "Building kernel module failed" && exit 1; fi
-		popd
-		mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
-		strip --strip-unneeded drivers/net/wireless/rtl8192cu/8192cu.ko
-		cp drivers/net/wireless/rtl8192cu/8192cu.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
 		fi
 		if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "vero2" ]
 		then
@@ -204,26 +203,18 @@ then
 		strip --strip-unneeded drivers/net/wireless/mt7610u/os/linux/mt7610u_sta.ko
                 cp drivers/net/wireless/mt7610u/os/linux/mt7610u_sta.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/net/wireless/
                 fi
-        # Build V4L2 drivers for Vero 4K
         if [ "$1" == "vero364" ]
-        then
-		kernel_path=$(pwd)
-		cp mb.config media_build/v4l/.config
-                pushd media_build
-                make untar
-                cp -a "../drivers/amlogic/video_dev" "linux/drivers/media/"
-                sed -i 's,common/,,g; s,"trace/,",g' $(find linux/drivers/media/video_dev/ -type f)
-                sed -i 's,\$(CONFIG_V4L_AMLOGIC_VIDEO),m,g' "linux/drivers/media/video_dev/Makefile"
-                echo "obj-y += video_dev/" >> "linux/drivers/media/Makefile"
-                echo "source drivers/media/video_dev/Kconfig " >> "linux/drivers/media/Kconfig"
-                cp -a "${kernel_path}/drivers/media/v4l2-core/videobuf-res.c" "linux/drivers/media/v4l2-core/"
-                cp -a "${kernel_path}/include/media/videobuf-res.h" "linux/include/media/"
-                echo "obj-m += videobuf-res.o" >> "linux/drivers/media/v4l2-core/Makefile"
-                $BUILD VER=${VERSION} SRCDIR=$(pwd)/../
-                popd
-                mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/backport
-		cp media_build/v4l/*.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/backport
-        fi
+	then
+		# Build V4L2 modules for Vero 4K
+		$BUILD M=drivers/osmc/media_modules CONFIG_AMLOGIC_MEDIA_VDEC_OSMC=m
+		mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/osmc
+		for file in $(find drivers/osmc/media_modules/ -name "*.ko"); do cp $file ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/osmc; done
+		# Build OpTEE modules for secureOSMC
+		$BUILD M=drivers/osmc/secureosmc
+		mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/osmc/secureosmc
+		cp drivers/osmc/secureosmc/optee/optee_armtz.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/osmc/secureosmc
+		cp drivers/osmc/secureosmc/optee.ko ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers/osmc/secureosmc
+	fi
 	# Unset architecture
 	ARCH=$(arch)
 	export ARCH

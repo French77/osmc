@@ -1,0 +1,8 @@
+Origin: OSMC
+Version: 20.2.0-1
+Section: libs
+Essential: No
+Priority: optional
+Maintainer: Sam G Nazarko <email@samnazarko.co.uk>
+Description: MESA graphical libraries for OSMC
+Depends: libexpat1, zlib1g

@@ -11,7 +11,6 @@
 import os
 import socket
 import subprocess
-import sys
 import threading
 import traceback
 from io import open
@@ -19,6 +18,7 @@ from io import open
 import xbmc
 import xbmcaddon
 import xbmcgui
+import xbmcvfs
 from osmccommon.osmc_language import LangRetriever
 from osmccommon.osmc_logging import StandardLogger
 
@@ -28,7 +28,6 @@ from .osmc_advset_editor import AdvancedSettingsEditor
 
 ADDON_ID = 'script.module.osmcsetting.networking'
 DIALOG = xbmcgui.Dialog()
-PY2 = sys.version_info.major == 2
 
 WIFI_THREAD_NAME = 'wifi_population_thread'
 BLUETOOTH_THREAD_NAME = 'bluetooth_population_thread'
@@ -276,7 +275,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
     @property
     def lib_path(self):
         if not self._lib_path:
-            self._lib_path = os.path.join(self.path, 'resources', 'lib').rstrip('/') + '/'
+            self._lib_path = os.path.join(self.path, 'resources', 'lib', 'osmcnetworking').rstrip('/') + '/'
         return self._lib_path
 
     @property
@@ -858,7 +857,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 # if the dictionary is empty, don't write anything
                 return
 
-        user_data = xbmc.translatePath("special://userdata")
+        user_data = xbmcvfs.translatePath("special://userdata")
         loc = os.path.join(user_data, 'advancedsettings.xml')
 
         try:
@@ -1028,7 +1027,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 if (self.current_network_config[self.internet_protocol]['Method'] in
                         ['nfs_dhcp', 'nfs_manual']):
                     with open(self.reboot_required_file, 'w', encoding='utf-8') as open_file:
-                        open_file.write(u'd' if PY2 else 'd')
+                        open_file.write('d')
                     # 'NFS Network Settings'
                     # 'Your Settings will not take effect until you reboot. Reboot Now?''
                     if DIALOG.yesno(self.lang(32036), self.lang(32037)):
@@ -1270,7 +1269,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
         if connected == 'False':
             if not self.conn_ssid:  # if we are not connected to a network connect
-                self.connect_to_wifi(ssid, encrypted)
+                self.connect_to_wifi(ssid, encrypted, opt_forget=True)
             else:  # Display a toast asking the user to disconnect first
                 # 'Please disconnect from the current network before connecting'
                 # 'Wireless'
@@ -1305,7 +1304,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                 self.clear_busy_dialogue()
 
-    def connect_to_wifi(self, ssid, encrypted, password=None, scan=False):
+    def connect_to_wifi(self, ssid, encrypted, password=None, scan=False, opt_forget=False):
         if scan:
             self.show_busy_dialogue()
             osmc_network.scan_wifi()
@@ -1328,13 +1327,26 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 hiddenssid = DIALOG.input(self.lang(32073))
 
             else:
-                # 'Wireless'   'Connect to'
-                if DIALOG.yesno(self.lang(32041), self.lang(32052) + ' ' + ssid + '?'):
-                    connect = True
+                if not opt_forget or not os.path.isdir(path.replace('/net/connman/service/', '/var/lib/connman/')):
+                    # 'Wireless'   'Connect to'
+                    if DIALOG.yesno(self.lang(32041), self.lang(32052) + ' ' + ssid + '?'):
+                        connect = True
+                else:
+                    selection = DIALOG.select('%s: %s' % (self.lang(32041), self.conn_ssid),
+                                              [self.lang(32052) + ' ' + ssid + '?',
+                                               self.lang(32094) % ssid])
+                    if selection == 0:
+                        connect = True
+
+                    if selection == 1:
+                        self.show_busy_dialogue()
+                        osmc_network.wifi_remove(path)
+                        self.clear_busy_dialogue()
 
             if connect or hiddenssid:
                 self.show_busy_dialogue()
 
+                hiddenssid = hiddenssid or ssid
                 # try without a password see if connman has the password
                 connection_status = osmc_network.wifi_connect(path, None,
                                                               hiddenssid, self.lib_path)
@@ -1807,8 +1819,10 @@ class BluetoothPopulationThread(threading.Thread):
             except:
                 pass
 
-        map(lambda addr, info: list_control.addItem(self.create_bluetooth_item(addr, info)),
-            devices_dict.items())
+        devices = list(devices_dict.items())
+        for device in devices:
+            bluetooth_item = self.create_bluetooth_item(device[0], device[1])
+            list_control.addItem(bluetooth_item)
 
     @staticmethod
     def create_bluetooth_item(address, info):

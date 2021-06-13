@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     Copyright (C) 2014-2020 OSMC (KodeKarnage)
@@ -14,11 +14,6 @@ import os.path
 import traceback
 from io import open
 from xml.etree import ElementTree
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
 
 GUI_FILE = '.kodi/userdata/guisettings.xml'
 STRINGS_FILE = '/usr/share/kodi/addons/resource.language.en_gb/resources/strings.po'  # noqa E501
@@ -53,6 +48,15 @@ SETTINGS_LIST = [
     ('videoscreen', 'lockhpd'),
     ('videoscreen', 'screenmode'),
     ('videoscreen', 'whitelist'),
+]
+
+STRING_MAP = [
+    (('videoplayer', 'useamcodecmpeg2'), 'Accelerate MPEG2'),
+    (('videoplayer', 'useamcodecmpeg4'), 'Accelerate MPEG4'),
+    (('videoplayer', 'useamcodech264'), 'Accelerate h264'),
+    (('videoscreen', 'force422'), 'Force 422 colour subsampling'),
+    (('videoscreen', 'forcergb'), 'Force RGB output'),
+    (('videoscreen', 'lockhpd'), 'Lock HDMI HPD'),
 ]
 
 
@@ -93,17 +97,20 @@ class GuiParser(object):
                 for line in open_file:
                     if line.startswith('msgctxt'):
                         try:
-                            msgctxt = line.split(' ')[1].strip().split('"')[1][1:] # noqa E501
+                            msgctxt = line.split(' ')[1].strip().split('"')[1][1:]  # noqa E501
                         except IndexError:
                             continue
 
                         for line in open_file:
                             if line.startswith('msgid'):
                                 try:
-                                    system_strings[msgctxt] = line.split(' ', 1)[1].strip().split('"')[1] # noqa E501
+                                    system_strings[msgctxt] = line.split(' ', 1)[1].strip().split('"')[1]  # noqa E501
                                 except IndexError:
-                                    system_strings[msgctxt] = 'string failed - %s' % line # noqa E501
+                                    system_strings[msgctxt] = 'string failed - %s' % line  # noqa E501
                                 break
+
+            # strings that have been since removed
+            system_strings['39000'] = 'HD and up'
 
         except Exception:
             tb = traceback.format_exc()
@@ -132,7 +139,8 @@ class GuiParser(object):
             if options is not None:
                 system_settings[_id]['options'] = {}
                 for o in options:
-                    system_settings[_id]['options'][o.text] = o.attrib['label']
+                    if 'label' in o.attrib:
+                        system_settings[_id]['options'][o.text] = o.attrib['label']
 
             default = setting.find('default')
             if default is not None:
@@ -219,7 +227,10 @@ class GuiParser(object):
             try:
                 label = self.system_strings[section['label']]
             except Exception:
-                label = _setting
+                try:
+                    label = next(string[1] for string in STRING_MAP if string[0] == _setting)
+                except Exception:
+                    label = _setting
 
             if section.get('options', None):
                 lo = section.get('options', {}).get(setting.text, 'failed')
@@ -298,7 +309,7 @@ class GuiParser(object):
     def go(self):
         try:
             self.gui_settings = ElementTree.parse(self.gui_file).getroot()
-        except FileNotFoundError:
+        except IOError:
             return ['Unable to open guisettings file: {}'.format(self.gui_file)]
         except ElementTree.ParseError as e:
             return ['There was a problem parsing {}'.format(self.gui_file), e]

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
     Copyright (C) 2014-2020 OSMC (KodeKarnage)
@@ -14,7 +14,6 @@ import json
 import os
 import socket
 import subprocess
-import sys
 import traceback
 from contextlib import closing
 from copy import deepcopy
@@ -40,7 +39,6 @@ ADDON_ID = 'service.osmc.settings'
 ADDON = xbmcaddon.Addon(ADDON_ID)
 
 DIALOG = xbmcgui.Dialog()
-PY3 = sys.version_info.major == 3
 
 log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
 lang = LangRetriever(ADDON).lang
@@ -79,6 +77,19 @@ class Main(object):
         # run the ubiquifonts script to import the needed fonts into the Font.xml
         _ = self.fonts.import_osmc_fonts()
 
+        if not os.path.isfile('/walkthrough_completed'):
+            # Tell Kodi that OSMC is running the walkthrough
+            try:
+                xbmc.setosmcwalkthroughstatus(1)
+            except Exception:
+                log(traceback.format_exc())
+        else:
+            try:
+                # Tell Kodi that OSMC is done
+                xbmc.setosmcwalkthroughstatus(2)
+            except Exception:
+                log(traceback.format_exc())
+
         # daemon
         self._daemon()
 
@@ -92,19 +103,24 @@ class Main(object):
     def _daemon(self):
         log('daemon started')
 
-        self._walk_through()  # start walk through
+        if not os.path.isfile('/walkthrough_completed'):
+            self._walk_through()  # start walk through
 
         while not self.monitor.abortRequested():
-            if not self.monitor.abortRequested() and not self.parent_queue.empty():
-                response = self.parent_queue.get()
+            if not self.parent_queue.empty():
+                try:
+                    response = self.parent_queue.get()
+                    log('response : %s' % response)
 
-                log('response : %s' % response)
+                    abort_requested = self._handle_response(response=response)
+                    if abort_requested:
+                        break
 
-                self.parent_queue.task_done()
-
-                abort_requested = self._handle_response(response=response)
-                if abort_requested:
-                    break
+                finally:
+                    try:
+                        self.parent_queue.task_done()
+                    except:
+                        pass
 
             # sleep for one second, exit if Kodi is shutting down
             if self.monitor.waitForAbort(1):
@@ -260,7 +276,7 @@ class Main(object):
 
                         xml = xbmc.getInfoLabel('Window.Property(xmlfile)')
 
-                        if xml not in ['DialogYesNo.xml', 'Dialogyesno.xml', 'DialogYesno.xml', 'DialogyesNo.xml', 'dialogyesno.xml']:
+                        if xml != 'DialogConfirm.xml':
                             log('Skin reload requested')
 
                             xbmc.executebuiltin('ReloadSkin()')
@@ -281,11 +297,6 @@ class Main(object):
         return False
 
     def _walk_through(self):
-        walk_through = not os.path.isfile('/walkthrough_completed')
-        if not walk_through:
-            self.set_walkthrough_status(2)
-            return
-
         # Tell Kodi that OSMC is running the walkthrough
         self.window.setProperty("walkthrough_is_running", 'any_value')
         self.set_walkthrough_status(1)
@@ -333,7 +344,7 @@ class Main(object):
 
                     with closing(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)) as open_socket:
                         open_socket.connect('/var/tmp/osmc.settings.update.sockfile')
-                        if PY3 and not isinstance(message, (bytes, bytearray)):
+                        if not isinstance(message, (bytes, bytearray)):
                             message = message.encode('utf-8', 'ignore')
                         open_socket.sendall(message)
 

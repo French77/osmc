@@ -14,9 +14,9 @@ import math
 import os
 import re
 import subprocess
-import sys
 import tarfile
 import traceback
+from copy import deepcopy
 from io import open
 
 import xbmc
@@ -39,9 +39,11 @@ LOCATIONS = {
     'backup_playlists': '{kodi_folder}userdata/playlists/',
     'backup_profilesF': '{kodi_folder}userdata/profiles/',
     'backup_Thumbnails': '{kodi_folder}userdata/Thumbnails/',
+    'backup_Savestates': '{kodi_folder}userdata/Savestates/',
+    'backup_tvheadend': '{kodi_folder}userdata/.hts/',
     'backup_favourites': '{kodi_folder}userdata/favourites.xml',
-    'backup_keyboard': '{kodi_folder}userdata/keyboard.xml',
-    'backup_remote': '{kodi_folder}userdata/remote.xml',
+    'backup_passwords': '{kodi_folder}userdata/passwords.xml',
+    'backup_mediasources': '{kodi_folder}userdata/mediasources.xml',
     'backup_LCD': '{kodi_folder}userdata/LCD.xml',
     'backup_profiles': '{kodi_folder}userdata/profiles.xml',
     'backup_RssFeeds': '{kodi_folder}userdata/RssFeeds.xml',
@@ -51,6 +53,9 @@ LOCATIONS = {
     'backup_guisettings': '{kodi_folder}userdata/guisettings.xml',
     'backup_fstab': '{kodi_folder}userdata/fstab',
     'backup_advancedsettings': '{kodi_folder}userdata/advancedsettings.xml',
+    'backup_samba_local': '{kodi_folder}userdata/smb-local.conf',
+    'backup_autofs': '{kodi_folder}userdata/autofs',
+    'backup_authorized_keys': '{kodi_folder}userdata/authorized_keys',
 }
 
 LABELS = {
@@ -62,24 +67,49 @@ LABELS = {
     '{kodi_folder}/userdata/playlists': 'Directory - Playlists',
     '{kodi_folder}/userdata/profiles': 'Directory - Profiles',
     '{kodi_folder}/userdata/Thumbnails': 'Directory - Thumbnails',
+    '{kodi_folder}/userdata/Savestates': 'Directory - Save States',
+    '{kodi_folder}/userdata/.hts': 'Directory - Tvheadend',
     '{kodi_folder}/userdata/advancedsettings.xml': 'File - advancedsettings.xml',
     '{kodi_folder}/userdata/guisettings.xml': 'File - guisettings.xml',
     '{kodi_folder}/userdata/fstab': 'File - fstab',
     '{kodi_folder}/userdata/sources.xml': 'File - sources.xml',
     '{kodi_folder}/userdata/profiles.xml': 'File - profiles.xml',
     '{kodi_folder}/userdata/favourites.xml': 'File - favourites.xml',
-    '{kodi_folder}/userdata/keyboard.xml': 'File - keyboard.xml',
-    '{kodi_folder}/userdata/remote.xml': 'File - remote.xml',
+    '{kodi_folder}/userdata/passwords.xml': 'File - passwords.xml',
+    '{kodi_folder}/userdata/mediasources.xml': 'File - mediasources.xml',
     '{kodi_folder}/userdata/LCD.xml': 'File - LCD.xml',
     '{kodi_folder}/userdata/RssFeeds.xml': 'File - RssFeeds.xml',
     '{kodi_folder}/userdata/upnpserver.xml': 'File - upnpserver.xml',
     '{kodi_folder}/userdata/peripheral_data.xml': 'File - peripheral_data.xml',
+    '{kodi_folder}/userdata/smb-local.conf': 'File - smb-local.conf',
+    '{kodi_folder}/userdata/authorized_keys': 'File - Authorized SSH Keys',
+    '{kodi_folder}/userdata/autofs': 'Mixed - Autofs',
 }
+
+AUTOFS_SOURCE_FILES = [
+    '/etc/auto.master',
+    '/etc/auto.misc',
+    '/etc/auto.net',
+    '/etc/auto.nfs.shares',
+    '/etc/auto.smb',
+    '/etc/auto.smb.shares',
+    '/etc/autofs.conf',
+    '/etc/auto.master.d/',
+]
+
+AUTOFS_DEST_FILES = [
+    '{kodi_folder}userdata/auto.master',
+    '{kodi_folder}userdata/auto.misc',
+    '{kodi_folder}userdata/auto.net',
+    '{kodi_folder}userdata/auto.nfs.shares',
+    '{kodi_folder}userdata/auto.smb',
+    '{kodi_folder}userdata/auto.smb.shares',
+    '{kodi_folder}userdata/autofs.conf',
+    '{kodi_folder}userdata/auto.master.d/',
+]
 
 ADDON_ID = 'script.module.osmcsetting.updates'
 DIALOG = xbmcgui.Dialog()
-
-PY2 = sys.version_info.major == 2
 
 log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
 
@@ -171,7 +201,7 @@ class OSMCBackup(object):
         """
             returns the location of the kodi folder
         """
-        return xbmc.translatePath('special://home')
+        return xbmcvfs.translatePath('special://home')
 
     def create_backup_file_list(self):
         """
@@ -180,7 +210,14 @@ class OSMCBackup(object):
         kodi_folder = self.kodi_location()
 
         backup_candidates = []
-        for setting, location in LOCATIONS.items():
+
+        locations = list(deepcopy(LOCATIONS).items())
+
+        if self.settings_dict['backup_autofs']:  # expand autofs files
+            locations = [(setting, destination_file) for setting, destination_file in locations if setting != 'backup_autofs']
+            locations += [('backup_autofs', destination_file) for destination_file in AUTOFS_DEST_FILES]
+
+        for setting, location in locations:
             if self.settings_dict[setting]:
                 # if the user is backing up guisettings.xml, then call for the settings to be saved using
                 # custom method
@@ -213,7 +250,7 @@ class OSMCBackup(object):
 
         # check locally
         try:
-            st = os.statvfs(xbmc.translatePath('special://temp'))
+            st = os.statvfs(xbmcvfs.translatePath('special://temp'))
 
             requirement = self.estimate_disk_requirement()
             if st.f_frsize:
@@ -281,33 +318,53 @@ class OSMCBackup(object):
         return sum(sizes)
 
     @staticmethod
-    def copy_fstab_to_userdata(location):
+    def copy_to_backup(source_location, destination_location):
         """
-            Copy /etc/fstab to the userdata folder so that it can be backed up.
-            """
+            Copy `source_location` to the userdata `destination_location` folder so that it can be backed up.
+        """
+
         try:
-            xbmcvfs.delete(location)
+            if destination_location.endswith('/'):
+                xbmcvfs.rmdir(destination_location, force=True)
+
+            else:
+                xbmcvfs.delete(destination_location)
         except:
-            log('Failed to delete temporary fstab')
+            log('Failed to delete temporary %s' % destination_location)
 
-        success = xbmcvfs.copy('/etc/fstab', location)
-        if success:
-            log('fstab file successfully copied to userdata')
+        try:
+            subprocess.Popen(['cp', '-rf', source_location, destination_location])
 
-        else:
-            log('Failed to copy fstab file to userdata.')
+            log('%s successfully copied to %s' % (source_location, destination_location))
+
+        except:
+            log('Failed to copy %s file to %s')
             raise
 
     @staticmethod
-    def copy_fstab_to_etc(location):
+    def move_to_restore(source_location, destination_location, sudo=False):
         """
-            Copy /etc/fstab to the userdata folder so that it can be backed up.
+            Move `source_location` to the `destination_location`
         """
+        if destination_location.endswith('/') and not os.path.isdir(destination_location):
+            try:
+                if sudo:
+                    subprocess.Popen(['sudo', 'mkdir', destination_location])
+                else:
+                    os.mkdir(destination_location)
+            except:
+                log(traceback.format_exc())
+                pass
+
         try:
-            subprocess.Popen(['sudo', 'mv', location, '/etc'])
+            if sudo:
+                subprocess.Popen(['sudo', 'mv', source_location, destination_location])
+            else:
+                subprocess.Popen(['mv', source_location, destination_location])
 
         except:
-            log('Failed to copy fstab file to /etc.')
+            log(traceback.format_exc())
+            log('Failed to move %s file to %s')
             raise
 
     def create_tarball(self):
@@ -329,7 +386,7 @@ class OSMCBackup(object):
         # get the tag for the backup file
         tag = self.generate_tarball_name()
         # generate name for temporary tarball
-        local_tarball_name = os.path.join(xbmc.translatePath('special://temp'), FILE_PATTERN % tag)
+        local_tarball_name = os.path.join(xbmcvfs.translatePath('special://temp'), FILE_PATTERN % tag)
         # generate name for remote tarball
         remote_tarball_name = os.path.join(location, FILE_PATTERN % tag)
         # get the size of all the files that are being backed up
@@ -351,23 +408,50 @@ class OSMCBackup(object):
             'message': self.lang(32159)
         })
 
-        new_root = xbmc.translatePath('special://home')
+        new_root = xbmcvfs.translatePath('special://home')
 
         try:
             with tarfile.open(name=local_tarball_name, mode="w:gz") as tar:
                 for name, size in self.backup_candidates:
                     # if the user wants to backup the fstab file, then copy it to userdata
+                    base_name = [f for f in name.split('/') if f][-1]
+                    autofs_source = next((f for f in AUTOFS_SOURCE_FILES
+                                          if f.endswith((base_name, base_name + '/'))), '')
+
                     if name.endswith('fstab'):
                         try:
-                            self.copy_fstab_to_userdata(name)
+                            self.copy_to_backup('/etc/fstab', name)
                         except:
                             continue
+
+                    elif name.endswith('authorized_keys'):
+                        try:
+                            self.copy_to_backup('/home/osmc/.ssh/authorized_keys', name)
+                        except:
+                            continue
+
+                    elif name.endswith('/.hts/'):
+                        try:
+                            self.copy_to_backup('/home/osmc/.hts/', name)
+                        except:
+                            continue
+
+                    elif name.endswith('smb-local.conf'):
+                        try:
+                            self.copy_to_backup('/etc/samba/smb-local.conf', name)
+                        except:
+                            continue
+
+                    elif autofs_source:
+                        self.copy_to_backup(autofs_source, name)
 
                     self.progress(**{
                         'percent': pct,
                         'heading': self.lang(32147),
                         'message': '%s' % name
                     })
+
+                    xbmc.sleep(150)  # sleep for 150ms to resolve invalid FileNotFound
 
                     try:
                         new_path = os.path.relpath(name, new_root)
@@ -489,7 +573,7 @@ class OSMCBackup(object):
 
                 # this requires copying the tar_file from its stored location, to kodi/temp
                 # xbmcvfs cannot read into tar files without copying the whole thing to memory
-                temp_copy = os.path.join(xbmc.translatePath('special://temp'), basename)
+                temp_copy = os.path.join(xbmcvfs.translatePath('special://temp'), basename)
 
                 result = xbmcvfs.copy(remote_file, temp_copy)
                 if not result:
@@ -528,7 +612,8 @@ class OSMCBackup(object):
                 menu_items = []
                 for k, v in LABELS.items():
                     for member in members:
-                        if k.endswith(member.name):
+                        if k.endswith(member.name) or \
+                                (k.endswith('userdata/autofs') and 'userdata/auto' in member.name):
                             menu_items.append((member, v))
                             break
 
@@ -566,6 +651,12 @@ class OSMCBackup(object):
                         restore_items = [restore_item[0]]
                         log('User has chosen to restore a single item: %s' % restore_item[1])
 
+                    elif restore_item[1] == 'Mixed - Autofs':
+                        log('User is restoring: %s' % restore_item[1])
+                        restore_items = []
+                        for member in members:
+                            if 'userdata/auto' in member.name:
+                                restore_items.append(member)
                     else:
                         log('User is restoring a folder: %s' % restore_item[1])
                         restore_items = []
@@ -583,7 +674,7 @@ class OSMCBackup(object):
                 if overwrite == 0:
                     # restore over existing files
                     log('User has chosen to overwrite existing files.')
-                    restore_location = xbmc.translatePath('special://home')
+                    restore_location = xbmcvfs.translatePath('special://home')
 
                     # check the restore_items for guisettings.xml, if found then restore that
                     # to the addon_data folder, create the /RESET_GUISETTINGS file and write
@@ -626,9 +717,35 @@ class OSMCBackup(object):
                             elif member.name.endswith('userdata/fstab') and self.restoring_fstab:
                                 # restore temp version back to userdata
                                 t.extract(member, restore_location)
-                                fstab_loc = os.path.join(restore_location,
-                                                         os.path.basename(member.name))
+                                fstab_loc = os.path.join(restore_location, member.name)
                                 self.restore_fstab(fstab_loc)
+
+                            elif member.name.endswith('userdata/authorized_keys'):
+                                # restore temp version back to userdata
+                                t.extract(member, restore_location)
+                                authorized_keys_loc = os.path.join(restore_location, member.name)
+                                self.move_to_restore(authorized_keys_loc, '/home/osmc/.ssh/',
+                                                     sudo=False)
+
+                            elif member.name.endswith('userdata/smb-local.conf'):
+                                # restore temp version back to userdata
+                                t.extract(member, restore_location)
+                                samba_local_conf = os.path.join(restore_location, member.name)
+                                self.move_to_restore(samba_local_conf, '/etc/samba/', sudo=True)
+
+                            elif 'userdata/.hts/' in member.name:
+                                # restore temp version back to userdata
+                                t.extract(member, restore_location)
+                                tvheadend_loc = os.path.join(restore_location, member.name)
+                                self.move_to_restore(tvheadend_loc, '/home/osmc/.hts/',
+                                                     sudo=False)
+
+                            elif 'userdata/auto' in member.name and \
+                                    not member.name.endswith('userdata/autofs'):
+                                # restore temp version back to userdata
+                                t.extract(member, restore_location)
+                                autofs_file = os.path.join(restore_location, member.name)
+                                self.move_to_restore(autofs_file, '/etc/', sudo=True)
 
                             else:
                                 t.extract(member, restore_location)
@@ -842,10 +959,7 @@ class OSMCBackup(object):
             # we have to uniquify the list first, as the procedure above could result in multiple
             # commented out lines appearing in the restored fstab
             # it's just easier to remove them here than avoid adding them in the first place
-            if PY2:
-                new_lines = [
-                    x.decode('utf-8') if isinstance(x, str) else x for x in new_lines
-                ]
+
             with open('/tmp/fstab', 'w', encoding='utf-8') as f:
                 f.writelines(self.uniquify(new_lines))
 

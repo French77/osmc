@@ -10,7 +10,6 @@
 
 import os
 import subprocess
-import sys
 import time
 from io import open
 
@@ -28,7 +27,6 @@ ACTION_SELECT_ITEM = 7
 
 ADDON_ID = "script.module.osmcsetting.pi"
 DIALOG = xbmcgui.Dialog()
-PY2 = sys.version_info.major == 2
 
 log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
 
@@ -45,7 +43,7 @@ class ConfigEditorGui(xbmcgui.WindowXMLDialog):
                             'device_tree_overlay', 'dtparam']
         self.del_string = ' [' + self.lang(32056) + ']'
 
-        self.config = '/boot/config.txt'
+        self.config = '/boot/config-user.txt'
 
         self.list_control = None
         self.changed = False
@@ -64,7 +62,7 @@ class ConfigEditorGui(xbmcgui.WindowXMLDialog):
         return self._lang(value)
 
     def onInit(self):
-        # give the settings enough time to be saved to the config.txt
+        # give the settings enough time to be saved to the config-user.txt
         xbmc.sleep(150)
 
         # list of settings that are ignored in the duplicate check
@@ -141,25 +139,23 @@ class ConfigEditorGui(xbmcgui.WindowXMLDialog):
 
                     new_config = self.grab_item_strings()
 
-                    # temporary location for the config.txt
-                    tmp_loc = '/var/tmp/config.txt'
+                    # temporary location for the config-user.txt
+                    tmp_loc = '/var/tmp/config-user.txt'
 
-                    # write the long_string_file to the config.txt
+                    # write the long_string_file to the config-user.txt
                     with open(tmp_loc, 'w', encoding='utf-8') as open_file:
                         for line in new_config:
                             _line = line.replace(" = ", "=") + '\n'
-                            if PY2 and isinstance(_line, str):
-                                _line = _line.decode('utf-8')
                             open_file.write(_line)
                             log('' + _line)
 
                     # backup existing config
                     suffix = '_' + str(time.time()).split('.')[0]
                     subprocess.call(["sudo", "cp", self.config, '/home/pi/'])
-                    subprocess.call(["sudo", "mv", '/home/pi/config.txt',
-                                     '/home/pi/config' + suffix + '.txt'])
+                    subprocess.call(["sudo", "mv", '/home/pi/config-user.txt',
+                                     '/home/pi/config-user' + suffix + '.txt'])
 
-                    # copy over the temp config.txt to /boot/ as superuser
+                    # copy over the temp config-user.txt to /boot/ as superuser
                     subprocess.call(["sudo", "mv", tmp_loc, self.config])
 
                     # THIS IS JUST FOR TESTING, LAPTOP DOESNT LIKE SUDO HERE

@@ -20,17 +20,21 @@ do
 esac
 done
 
-preferred=$(busybox grep \* /sys/class/amhdmitx/amhdmitx0/disp_cap | busybox sed 's/\*//g')
+preferred=$(busybox grep \1080.60hz /sys/class/amhdmitx/amhdmitx0/disp_cap | busybox sed 's/\*//g')
+if ! [ "$preferred" ]
+then
+	preferred=$(busybox grep \* /sys/class/amhdmitx/amhdmitx0/disp_cap | busybox sed 's/\*//g')
+fi
 if echo $hdmimode | busybox grep -q force
 then
     hdmimode=$(echo $hdmimode | /bin/busybox sed 's/force//g')
     echo "$hdmimode" > /sys/class/display/mode
 else
-if [ "$preferred" ] && [ "$hdmimode" != "$preferred" ]
-then
-  if ! echo $preferred | busybox grep -q 2160p; then hdmimode="$preferred"; fi
-  echo "$hdmimode" > /sys/class/display/mode
-fi
+	if [ "$preferred" ] && [ "$hdmimode" != "$preferred" ]
+	then
+	  if ! echo $preferred | busybox grep -q 2160p; then hdmimode="$preferred"; fi
+	fi
+	echo "$hdmimode" > /sys/class/display/mode
 fi
 
 # Configure framebuffer X and Y size
@@ -54,8 +58,6 @@ case $hdmimode in
   4k*|smpte*|2160*)
     echo 0 0 1919 1079 > /sys/class/graphics/fb0/free_scale_axis
     echo 0 0 3839 2159 > /sys/class/graphics/fb0/window_axis
-    echo 1920 > /sys/class/graphics/fb0/scale_width
-    echo 1080 > /sys/class/graphics/fb0/scale_height
     echo 0x10001 > /sys/class/graphics/fb0/free_scale
   ;;
 esac

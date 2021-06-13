@@ -14,9 +14,7 @@ import os
 import random
 import socket
 import subprocess
-import sys
 import traceback
-from contextlib import closing
 from datetime import datetime
 from io import open
 
@@ -24,6 +22,7 @@ import apt
 import xbmc
 import xbmcaddon
 import xbmcgui
+import xbmcvfs
 from osmccommon import osmc_comms
 from osmccommon.osmc_language import LangRetriever
 from osmccommon.osmc_logging import StandardLogger
@@ -38,19 +37,14 @@ except ImportError:
 
 ADDON_ID = 'script.module.osmcsetting.updates'
 DIALOG = xbmcgui.Dialog()
-PY2 = sys.version_info.major == 2
-PY3 = sys.version_info.major == 3
 
 log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
 
 
 def exit_osmc_settings_addon():
-    message = 'exit'
-    with closing(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)) as open_socket:
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as open_socket:
         open_socket.connect('/var/tmp/osmc.settings.sockfile')
-        if PY3 and not isinstance(message, (bytes, bytearray)):
-            message = message.encode('utf-8', 'ignore')
-        open_socket.sendall(message)
+        open_socket.sendall(b'exit')
 
     return 'OSMC Settings addon called to exit'
 
@@ -133,7 +127,7 @@ class Main(object):
         # the time that the service started
         self.service_start = datetime.now()
 
-        # dictionary containing the permissible actions (communicated from the child apt scripts)
+        # dictionary containing the permissable actions (communicated from the child apt scripts)
         # and the corresponding methods in the parent
         self.action_dict = {
             'apt_cache update complete': self.apt_update_complete,
@@ -263,8 +257,8 @@ class Main(object):
     @property
     def lib_path(self):
         if not self._lib_path:
-            self._lib_path = xbmc.translatePath(os.path.join(self.path, 'resources',
-                                                             'lib', 'osmcupdates'))
+            self._lib_path = xbmcvfs.translatePath(
+                os.path.join(self.path, 'resources', 'lib', 'osmcupdates')).rstrip('/') + '/'
         return self._lib_path
 
     def _daemon(self):
@@ -368,7 +362,7 @@ class Main(object):
         # create the file that will prevent further update checks until the updates
         # have been installed
         with open(self.block_update_file, 'w', encoding='utf-8') as f:
-            f.write(u'd' if PY2 else 'd')
+            f.write('d')
 
         # trigger the flag to skip update checks
         self.skip_update_check = True
@@ -410,31 +404,16 @@ class Main(object):
             # the only exception that should be handled is when the queue is empty
             pass
 
-    @staticmethod
-    def check_platform_conditions():
-        if os.path.isfile('/platform_no_longer_updates'):
-            return False, 'Update CONDITION : platform no longer receives updates'
-
-        return True, ''
-
     def check_update_conditions(self, connection_only=False):
         """
             Checks the users update conditions are met.
             Checks for:
-                    - /platform_no_longer_updates file
                     - active player
                     - idle time
                     - internet connectivity
                 connection_only, limits the check to just the internet connection
         """
-
         if not connection_only:
-            check_platform, _ = self.check_platform_conditions()
-
-            if not check_platform:
-                log('Update CONDITION : platform no longer maintained')
-                return False, 'Update CONDITION : platform no longer maintained'
-
             result_raw = xbmc.executeJSONRPC('{"jsonrpc": "2.0", '
                                              '"method": "Player.GetActivePlayers", '
                                              '"id": 1}')
@@ -465,7 +444,7 @@ class Main(object):
         if self.check_for_unsupported_version() == 'alpha':
             return
 
-        subprocess.Popen(['sudo', 'python', '%s/apt_cache_action.py' % self.lib_path, action])
+        subprocess.Popen(['sudo', 'python3', os.path.join(self.lib_path, 'apt_cache_action.py'), action])
 
     def position_icon(self):
         """
@@ -578,9 +557,11 @@ class Main(object):
                 'backup_playlists': self.addon.getSettingBool('backup_playlists'),
                 'backup_profilesF': self.addon.getSettingBool('backup_profilesF'),
                 'backup_Thumbnails': self.addon.getSettingBool('backup_Thumbnails'),
+                'backup_Savestates': self.addon.getSettingBool('backup_Savestates'),
+                'backup_tvheadend': self.addon.getSettingBool('backup_tvheadend'),
                 'backup_favourites': self.addon.getSettingBool('backup_favourites'),
-                'backup_keyboard': self.addon.getSettingBool('backup_keyboard'),
-                'backup_remote': self.addon.getSettingBool('backup_remote'),
+                'backup_passwords': self.addon.getSettingBool('backup_passwords'),
+                'backup_mediasources': self.addon.getSettingBool('backup_mediasources'),
                 'backup_LCD': self.addon.getSettingBool('backup_LCD'),
                 'backup_profiles': self.addon.getSettingBool('backup_profiles'),
                 'backup_RssFeeds': self.addon.getSettingBool('backup_RssFeeds'),
@@ -590,7 +571,10 @@ class Main(object):
                 'backup_guisettings': self.addon.getSettingBool('backup_guisettings'),
                 'backup_fstab': self.addon.getSettingBool('backup_fstab'),
                 'backup_advancedsettings': self.addon.getSettingBool('backup_advancedsettings'),
-                'on_upd_detected': self.addon.getSettingInt('on_upd_detected')
+                'backup_samba_local': self.addon.getSettingBool('backup_samba_local'),
+                'backup_autofs': self.addon.getSettingBool('backup_autofs'),
+                'backup_authorized_keys': self.addon.getSettingBool('backup_authorized_keys'),
+                'on_upd_detected': self.addon.getSettingInt('on_upd_detected'),
             }
             # this is to deprecate the automatic installation of non-system updates
             # changed to Download, and Prompt
@@ -631,9 +615,11 @@ class Main(object):
                 'backup_playlists': self.addon.getSettingBool('backup_playlists'),
                 'backup_profilesF': self.addon.getSettingBool('backup_profilesF'),
                 'backup_Thumbnails': self.addon.getSettingBool('backup_Thumbnails'),
+                'backup_Savestates': self.addon.getSettingBool('backup_Savestates'),
+                'backup_tvheadend': self.addon.getSettingBool('backup_tvheadend'),
                 'backup_favourites': self.addon.getSettingBool('backup_favourites'),
-                'backup_keyboard': self.addon.getSettingBool('backup_keyboard'),
-                'backup_remote': self.addon.getSettingBool('backup_remote'),
+                'backup_passwords': self.addon.getSettingBool('backup_passwords'),
+                'backup_mediasources': self.addon.getSettingBool('backup_mediasources'),
                 'backup_LCD': self.addon.getSettingBool('backup_LCD'),
                 'backup_profiles': self.addon.getSettingBool('backup_profiles'),
                 'backup_RssFeeds': self.addon.getSettingBool('backup_RssFeeds'),
@@ -642,7 +628,10 @@ class Main(object):
                 'backup_peripheral_data': self.addon.getSettingBool('backup_peripheral_data'),
                 'backup_guisettings': self.addon.getSettingBool('backup_guisettings'),
                 'backup_fstab': self.addon.getSettingBool('backup_fstab'),
-                'backup_advancedsettings': self.addon.getSettingBool('backup_advancedsettings')
+                'backup_advancedsettings': self.addon.getSettingBool('backup_advancedsettings'),
+                'backup_samba_local': self.addon.getSettingBool('backup_samba_local'),
+                'backup_autofs': self.addon.getSettingBool('backup_autofs'),
+                'backup_authorized_keys': self.addon.getSettingBool('backup_authorized_keys'),
             }
 
         # flags to determine whether the update scheduler needs to be
@@ -721,7 +710,7 @@ class Main(object):
         # check for sufficient space, only proceed if it is available
         root_space, _ = self.check_target_location_for_size(location='/', requirement=300)
         if root_space:
-            subprocess.Popen(['sudo', 'python', '%s/apt_cache_action.py' % self.lib_path,
+            subprocess.Popen(['sudo', 'python3', os.path.join(self.lib_path, 'apt_cache_action.py'),
                               'action_list', action])
 
         else:
@@ -858,12 +847,6 @@ class Main(object):
             Similar to update_now, but as this is a users request, forego all the player and idle checks.
         """
         # check whether the install is an alpha version
-        check_platform, _ = self.check_platform_conditions()
-
-        if not check_platform:
-            _ = DIALOG.ok(self.lang(32136), self.lang(32166))
-            return
-
         if self.check_for_unsupported_version() == 'alpha':
             return
 
@@ -919,7 +902,7 @@ class Main(object):
             # create the file that will prevent further update checks until
             # the updates have been installed
             with open(self.block_update_file, 'w', encoding='utf-8') as f:
-                f.write(u'd' if PY2 else 'd')
+                f.write('d')
 
             # turn on the "install now" setting in Settings.xml
             self.addon.setSettingBool('install_now_visible', True)
@@ -962,13 +945,8 @@ class Main(object):
             User called for a manual update
         """
         check_connection, _ = self.check_update_conditions(connection_only=True)
-        check_platform, _ = self.check_platform_conditions()
 
-        if not check_platform:
-            _ = DIALOG.ok(self.lang(32136), self.lang(32166))
-            return 'manual update cancelled, platform no longer maintained'
-
-        elif not check_connection:
+        if not check_connection:
             _ = DIALOG.ok(self.lang(32136), '[CR]'.join([self.lang(32137), self.lang(32138)]))
             return 'manual update cancelled, no connection'
 
@@ -1222,7 +1200,7 @@ class Main(object):
                     # create the file that will prevent further update checks until the
                     # updates have been installed
                     with open(self.block_update_file, 'w', encoding='utf-8') as f:
-                        f.write(u'd' if PY2 else 'd')
+                        f.write('d')
 
                     # trigger the flag to skip update checks
                     self.skip_update_check = True
@@ -1267,7 +1245,7 @@ class Main(object):
                                        pkg.shortname])
         log('dpkg query results: %s' % rlv)
 
-        lv = ''.join([x for x in rlv[:rlv.index(b"." if PY3 else ".")] if x in list(dig)])
+        lv = ''.join([x for x in rlv[:rlv.index(b".")] if x in list(dig)])
         log('Local version number: %s' % lv)
 
         # get version of updating package, raw_remote_version_string

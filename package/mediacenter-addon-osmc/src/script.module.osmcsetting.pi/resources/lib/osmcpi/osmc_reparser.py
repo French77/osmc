@@ -45,12 +45,10 @@
 
 """
 
+import os
 import re
 import subprocess
-import sys
 from io import open
-
-PY2 = sys.version_info.major == 2
 
 
 def config_to_kodi(settings, config):
@@ -1204,7 +1202,18 @@ MASTER_SETTINGS = {
 }
 
 
+def touch_user_config():
+    if not os.path.exists('/boot/config-user.txt'):
+        with open('/var/tmp/config-user.txt', 'a+'):
+            pass
+
+        # copy over the temp config-user.txt to /boot/ as superuser
+        subprocess.call(["sudo", "mv", '/var/tmp/config-user.txt', '/boot/config-user.txt'])
+
+
 def read_config_file(location):
+    touch_user_config()
+
     with open(location, "r", encoding='utf-8') as f:
         return f.readlines()
 
@@ -1213,11 +1222,6 @@ def write_config_file(location, new_config):
     new_config = [
         x + "\n" if not x.endswith("\n") else x for x in new_config if "remove_this_line" not in x
     ]
-
-    if PY2:
-        new_config = [
-            x.decode('utf-8') if isinstance(x, str) else x for x in new_config
-        ]
 
     with open(location, "w", encoding='utf-8') as f:
         f.writelines(new_config)
@@ -1253,12 +1257,12 @@ def clean_config(config, patterns):
 
 
 if __name__ == "__main__":
-    _config_txt = read_config_file('/boot/config.txt')
+    _config_txt = read_config_file('/boot/config-user.txt')
     _original_config = _config_txt[::]
 
     _extracted_settings = config_to_kodi(MASTER_SETTINGS, _config_txt)
     _new_settings = kodi_to_config(MASTER_SETTINGS, _original_config, _extracted_settings)
 
-    write_config_file('/var/tmp/config.txt', _new_settings)
+    write_config_file('/var/tmp/config-user.txt', _new_settings)
 
-    subprocess.call(["sudo", "mv", '/var/tmp/config.txt', '/boot/config.txt'])
+    subprocess.call(["sudo", "mv", '/var/tmp/config-user.txt', '/boot/config-user.txt'])

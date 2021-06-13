@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     Copyright (C) 2014-2020 OSMC (KodeKarnage)
@@ -42,7 +42,7 @@ try:
 
     log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
     lang = LangRetriever(ADDON).lang
-except ValueError:
+except (ValueError, ModuleNotFoundError):
     def lang(value):
         return value
 
@@ -50,14 +50,14 @@ except ValueError:
     def log(value):
         print(value)
 
-PY2 = sys.version_info.major == 2
-
 SECTION_START = '\n====================== %s =================== %s\n'
 SECTION_END = '\n---------------------- %s END --------------- %s\n\n'
 USERDATA = '/home/osmc/.kodi/userdata/'
 TEMP_LOG_FILENAME = 'uploadlog.txt'
 TEMP_LOG_FILE = '/var/tmp/' + TEMP_LOG_FILENAME
 UPLOAD_LOC = 'https://paste.osmc.tv'
+
+HARDWARE_PREFIX = ''
 
 SETS = {
     'uname': {
@@ -102,6 +102,14 @@ SETS = {
                 'key': 'Ul2H1CLu',
                 'ltyp': 'file_log',
                 'actn': '/boot/config.txt',
+                'hwid': 'rbp',
+            },
+            {
+                'name': 'Pi config-user',
+                'key': '7kfykHPJ',
+                'ltyp': 'file_log',
+                'actn': '/boot/config-user.txt',
+                'hwid': 'rbp',
             },
         ],
     },
@@ -486,36 +494,42 @@ SETS = {
                 'key': 'wes0DM2l',
                 'ltyp': 'cl_log',
                 'actn': '/opt/vc/bin/tvservice -s',
+                'hwid': 'rbp',
             },
             {
                 'name': 'Pi CEA',
                 'key': 'su34JRse',
                 'ltyp': 'cl_log',
                 'actn': '/opt/vc/bin/tvservice -m CEA',
+                'hwid': 'rbp',
             },
             {
                 'name': 'Pi DMT',
                 'key': 'zsl2D3rt',
                 'ltyp': 'cl_log',
                 'actn': '/opt/vc/bin/tvservice -m DMT',
+                'hwid': 'rbp',
             },
             {
                 'name': 'Pi Audio Cap',
                 'key': 'szl3J3wq',
                 'ltyp': 'cl_log',
                 'actn': '/opt/vc/bin/tvservice -a',
+                'hwid': 'rbp',
             },
             {
                 'name': 'MPG2 codec_enabled',
                 'key': 'DjfSD1Fa',
                 'ltyp': 'cl_log',
                 'actn': 'vcgencmd codec_enabled MPG2',
+                'hwid': 'rbp',
             },
             {
                 'name': 'WVC1 codec_enabled',
                 'key': 'dDR3l5zx',
                 'ltyp': 'cl_log',
                 'actn': 'vcgencmd codec_enabled WVC1',
+                'hwid': 'rbp',
             },
         ],
     },
@@ -575,6 +589,7 @@ class CommandLine(object):
             ps = subprocess.Popen(chunk, stdin=ps.stdout, stdout=subprocess.PIPE)
 
         res = subprocess.check_output(self.command_list, stdin=ps.stdout)
+        res = res.decode('utf-8')
 
         return res
 
@@ -780,6 +795,10 @@ class Main(object):
             if v.get('active', False):
 
                 for log_entry in v.get('logs', default_entry):
+                    if log_entry.get('hwid', '') == 'rbp' and not hardware_prefix().startswith('rbp'):
+                        # raspberry pi only log on non-rbp
+                        continue
+
                     self.log_blotter.append(log_entry['key'] + '  :  ' + log_entry['name'] + '\n')
 
         self.log_blotter.append('\n')
@@ -809,14 +828,18 @@ class Main(object):
         self.progress_dialog.update(percent=100, message=lang(32005))
         self.progress_dialog.close()
 
-    def grab_log(self, ltyp, actn, name, key):
+    def grab_log(self, ltyp, actn, name, key, hwid=''):
         """ Method grabs the logs from either a file or the command line."""
+
+        if hwid == 'rbp' and not hardware_prefix().startswith(hwid):
+            # raspberry pi only log on non-rbp
+            return
 
         self.log_blotter.extend([SECTION_START % (name, key)])
 
         try:
             if ltyp == 'file_log':
-                with open(actn, encoding='utf-8') as f:
+                with open(actn, 'r', encoding='utf-8') as f:
                     self.log_blotter.extend(f.readlines())
             else:
                 with CommandLineInterface(actn) as f:
@@ -827,21 +850,24 @@ class Main(object):
         self.log_blotter.extend([SECTION_END % (name, key)])
 
     def write_to_screen(self):
+        self.write_to_temp_file()
 
-        print(''.join(self.log_blotter))
+        with open(TEMP_LOG_FILE, 'rb') as f:
+            lines = f.readlines()
+
+        lines = [line.decode('utf-8') if isinstance(line, bytes) else line for line in lines]
+        screen_dump = ''.join(lines)
+
+        print(screen_dump)
 
     def write_to_temp_file(self):
         """ Writes the logs to a single temporary file """
         # clean up the blotter
-        self.log_blotter = [x.replace('\0', '') for x in self.log_blotter if hasattr(x, 'replace')]
-        if PY2:
-            self.log_blotter = [
-                x.decode('utf-8', 'ignore') if isinstance(x, str) else x
-                for x in self.log_blotter
-            ]
-        try:
-            with open(TEMP_LOG_FILE, 'w', encoding='utf-8') as f:
+        self.log_blotter = [x.replace('\0', '').replace('\ufeff', '').encode('utf-8')
+                            for x in self.log_blotter if hasattr(x, 'replace')]
 
+        try:
+            with open(TEMP_LOG_FILE, 'wb') as f:
                 # write the blotter contents
                 f.writelines(self.log_blotter)
 
@@ -956,6 +982,26 @@ class Main(object):
 
                     log("Logs successfully uploaded.")
                     log("Logs available at %s" % self.url.replace(' ', ''))
+
+
+def hardware_prefix():
+    """ Returns the prefix for the hardware type. rbp, rbp2, etc """
+    global HARDWARE_PREFIX
+
+    if HARDWARE_PREFIX:
+        return HARDWARE_PREFIX
+
+    with open('/proc/cmdline', 'r', encoding='utf-8') as f:
+        line = f.readline()
+
+    settings = line.split(' ')
+
+    for setting in settings:
+        if setting.startswith('osmcdev='):
+            HARDWARE_PREFIX = setting[len('osmcdev='):]
+            break
+
+    return HARDWARE_PREFIX
 
 
 if __name__ == "__main__":

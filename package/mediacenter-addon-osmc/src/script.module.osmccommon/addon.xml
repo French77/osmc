@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <addon id="script.module.osmccommon" name="OSMC Common Code" version="0.1.0" provider-name="OSMC (KodeKarnage)">
     <requires>
-        <import addon="xbmc.python" version="2.26.0"/>
+        <import addon="xbmc.python" version="3.0.0"/>
     </requires>
 
     <extension point="xbmc.python.module" library="resources/lib/"/>

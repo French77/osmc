@@ -71,7 +71,7 @@ class OSMCBluetooth:
     @property
     def lib_path(self):
         if not self._lib_path:
-            self._lib_path = os.path.join(self.path, 'resources', 'lib').rstrip('/') + '/'
+            self._lib_path = os.path.join(self.path, 'resources', 'lib', 'osmcnetworking').rstrip('/') + '/'
         return self._lib_path
 
     @staticmethod
@@ -184,6 +184,9 @@ class OSMCBluetooth:
             if path.startswith('/org/bluez/hci') and DEVICE_PATH in managed_objects[path].keys():
                 dbus_dict = managed_objects[path][DEVICE_PATH]
                 device_dict = {}
+
+                if 'Class' not in dbus_dict:
+                    continue
 
                 # remove dbus.String from the key
                 for key in dbus_dict:

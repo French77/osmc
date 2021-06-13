@@ -23,12 +23,8 @@ parted
 cpio
 python
 bison
-flex"
-
-if [ "$1" == "vero2" ]
-then
-   packages="u-boot-tools $packages"
-fi
+flex
+libssl-dev"
 
 for package in $packages
 do
@@ -36,12 +32,26 @@ do
 	verify_action
 done
 
+SIGN_KERNEL=0
+
+if [ "$SIGN_KERNEL" -eq 1 ]
+        then
+                SIG_FILE_AES="/etc/osmc/kernelaes"
+                SIG_FILE_AESIV="/etc/osmc/kernelaesiv"
+                SIG_FILE_KERNELKEY="/etc/osmc/kernelkey.pem"
+                if [ ! -f $SIG_FILE_AES ] || [ ! -f $SIG_FILES_AESIV ] || [ ! -f $SIG_FILE_KERNELKEY ]; then echo "Missing files needed for encrypting kernel image" && exit 1; fi
+        fi
+
 pull_source "http://buildroot.uclibc.org/downloads/buildroot-${BUILDROOT_VERSION}.tar.gz" "."
 verify_action
 pushd buildroot-${BUILDROOT_VERSION}
 install_patch "../patches" "all"
 install_patch "../patches" "$1"
-if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
+if [ "$SIGN_KERNEL" -eq 1 ]
+then
+	install_patch "../patches" "signed-${1}"
+fi
+if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]
 then
 	install_patch "../patches" "rbp"
 	sed s/rpi-firmware/rpi-firmware-osmc/ -i package/Config.in # Use our own firmware package
@@ -71,10 +81,10 @@ else
 fi
 if [ ! -f ../../../filesystem.tar.xz ]; then echo -e "No filesystem available for target" && exit 1; fi
 echo -e "Building disk image"
-if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "vero2" ] || [ "$1" == "vero3" ]; then size=320; fi
-date=$(date +%Y%m%d)
-if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ] || [ "$1" == "vero1" ] || [ "$1" == "vero2" ] || [ "$1" == "vero3" ]
+if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "vero3" ]
 then
+        size=320
+        date=$(date +%Y%m%d)
 	dd if=/dev/zero of=OSMC_TGT_${1}_${date}.img bs=1M count=${size} conv=sparse
 	parted -s OSMC_TGT_${1}_${date}.img mklabel msdos
 	parted -s OSMC_TGT_${1}_${date}.img mkpart primary fat32 4Mib 100%
@@ -83,26 +93,41 @@ then
 	mkfs.vfat -F32 /dev/mapper/loop0p1
 	mount /dev/mapper/loop0p1 /mnt
 fi
-if [ "$1" == "rbp1" ] || [ "$1" == "rbp2" ]
+if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]
 then
 	echo -e "Installing Pi files"
 	mv zImage /mnt/kernel.img
 	mv INSTALLER/* /mnt
 	mv *.dtb /mnt
 	mv overlays /mnt
-fi
-if [ "$1" == "vero2" ]
-then
-	echo -e "Installing Vero 2 files"
-	../../output/build/linux-master/scripts/mkbootimg --kernel uImage --base 0x0 --kernel_offset 0x1080000 --ramdisk rootfs.cpio.gz --second ../build/linux-master/arch/arm/boot/dts/amlogic/meson8b_vero2.dtb --output /mnt/kernel.img
-
+	if [ "$1" == "rbp4" ]
+	then
+		rm /mnt/*rpi-b*.dtb
+		rm /mnt/*rpi-*3*.dtb
+		rm /mnt/*rpi-*2*.dtb
+		rm /mnt/bcm2835*.dtb
+		rm /mnt/bcm2708*.dtb
+	fi
+	if [ "$1" == "rbp2" ]
+	then
+		rm /mnt/bcm2711-rpi-*.dtb
+	fi
 fi
 if [ "$1" == "vero3" ]
 then
 	echo -e "Installing Vero 3 files"
-	../.././output/build/linux-osmc-openlinux-4.9/scripts/multidtb/multidtb -o multi.dtb --dtc-path $(pwd)/../../output/build/linux-osmc-openlinux-4.9/scripts/dtc/ $(pwd)/../../output/build/linux-osmc-openlinux-4.9/arch/arm64/boot/dts/amlogic --verbose --page-size 2048
-        ../../output/build/linux-osmc-openlinux-4.9/scripts/mkbootimg --kernel Image.gz --base 0x0 --kernel_offset 0x1080000 --ramdisk rootfs.cpio.gz --second multi.dtb --output /mnt/kernel.img
-	cp multi.dtb /mnt/dtb.img
+	    ../.././output/build/linux-osmc-openlinux-4.9/scripts/multidtb/multidtb -o multi.dtb --dtc-path $(pwd)/../../output/build/linux-osmc-openlinux-4.9/scripts/dtc/ $(pwd)/../../output/build/linux-osmc-openlinux-4.9/arch/arm64/boot/dts/amlogic --verbose --page-size 2048
+	DTB_FILE="multi.dtb"
+        if [ "$SIGN_KERNEL" -eq 1 ]
+        then
+            DTB_FILE="multi.dtb.encrypted"
+	    ../.././output/build/linux-osmc-openlinux-4.9/scripts/amlogic/stool/sign.sh --sign-kernel -i multi.dtb -k $SIG_FILE_KERNELKEY -a $SIG_FILE_AES --iv $SIG_FILE_AESIV -o multi.dtb.encrypted || true
+            ../.././output/build/linux-osmc-openlinux-4.9/scripts/mkbootimg --kernel Image.gz --pagesize 2048 --header_version 1 --base 0x0 --kernel_offset 0x1080000 --ramdisk rootfs.cpio.gz --second multi.dtb --output kernel.img
+            ../.././output/build/linux-osmc-openlinux-4.9/scripts/amlogic/stool/sign.sh --sign-kernel -i kernel.img -k $SIG_FILE_KERNELKEY -a $SIG_FILE_AES --iv $SIG_FILE_AESIV -o /mnt/kernel.img || true
+	else
+            ../../output/build/linux-osmc-openlinux-4.9/scripts/mkbootimg --kernel Image.gz --base 0x0 --kernel_offset 0x1080000 --ramdisk rootfs.cpio.gz --second multi.dtb --output /mnt/kernel.img
+	fi
+	cp $DTB_FILE /mnt/dtb.img
 fi
 echo -e "Installing filesystem"
 mv $(pwd)/../../../filesystem.tar.xz /mnt/

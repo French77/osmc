@@ -1,4 +1,4 @@
-#!usr/bin/python
+#!usr/bin/python3
 # -*- coding: utf-8 -*-
 """
     Copyright (C) 2014-2020 OSMC (KodeKarnage)
@@ -22,11 +22,6 @@ try:
     from gi.repository import GObject
 except ImportError:
     import gobject as GObject
-
-try:
-    input = raw_input
-except NameError:
-    pass
 
 PEXPECT_SOL = 'SOL@'
 PEXPECT_EOL = '@EOL'

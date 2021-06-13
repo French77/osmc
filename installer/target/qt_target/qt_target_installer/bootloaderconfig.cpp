@@ -115,7 +115,7 @@ void BootloaderConfig::configureMounts()
 {
     QFile fstabFile("/mnt/root/etc/fstab");
     QStringList fstabStringList;
-    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2" || utils->getOSMCDev() == "vero1" || utils->getOSMCDev() == "atv" || utils->getOSMCDev() == "vero2" || utils->getOSMCDev() == "vero3")
+    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2" || utils->getOSMCDev() == "rbp4" || utils->getOSMCDev() == "vero1" || utils->getOSMCDev() == "atv" || utils->getOSMCDev() == "vero2" || utils->getOSMCDev() == "vero3")
     {
         QString bootFS = device->getBootFS();
         if (bootFS == "fat32") { bootFS = "vfat"; }
@@ -141,7 +141,7 @@ void BootloaderConfig::configureMounts()
 
 void BootloaderConfig::configureEnvironment()
 {
-    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2")
+    if (utils->getOSMCDev() == "rbp1" || utils->getOSMCDev() == "rbp2" || utils->getOSMCDev() == "rbp4")
     {
         QFile cmdlineFile("/mnt/boot/cmdline.txt");
         QStringList cmdlineStringList;
@@ -157,30 +157,8 @@ void BootloaderConfig::configureEnvironment()
                 cmdlineStringList << " ip=" + network->getIP() + "::" + network->getGW() + ":" + network->getMask() + ":osmc:eth0:off:" + network->getDNS1() + ":" + network->getDNS2();
             cmdlineStringList << " rootwait quiet ";
         }
-        QFile configFile("/mnt/boot/config.txt");
-        QStringList configStringList;
-        if (utils->getOSMCDev() == "rbp1")
-        {
-            configStringList << "gpu_mem_256=112\n" << "gpu_mem_512=144\n" << "hdmi_ignore_cec_init=1\n" << "disable_overscan=1\n" << "start_x=1\n" << "disable_splash=1\n";
-            cmdlineStringList << "osmcdev=rbp1";
-        }
-        if (utils->getOSMCDev() == "rbp2")
-        {
-            configStringList << "gpu_mem_1024=256\n" << "hdmi_ignore_cec_init=1\n" << "disable_overscan=1\n" << "start_x=1\n" << "disable_splash=1\n";
-            cmdlineStringList << "osmcdev=rbp2";
-        }
-        if (preseed->getBoolValue("vendor/dtoverlay"))
-            if (preseed->getBoolValue("vendor/dtoverlay")) {
-                QStringList dtOverlayList = preseed->getStringValue("vendor/dtoverlayparam").split("?");
-                for (int i = 0; i < dtOverlayList.count(); i++) {
-                    configStringList << "dtoverlay=" << dtOverlayList.at(i) << "\n";
-                }
-            }
-        if (preseed->getBoolValue("alsaoff"))
-                configStringList << "dtparam=audio=off\n";
-        utils->writeToFile(configFile, configStringList, false);
+	cmdlineStringList << "osmcdev=" << utils->getOSMCDev();
         utils->writeToFile(cmdlineFile, cmdlineStringList, false);
-        configFile.close();
         cmdlineFile.close();
     }
     if (utils->getOSMCDev() == "vero1") /* We only use 1x identifier for WiFi chip, so make it 'vero' later */

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
     Copyright (C) 2014-2020 OSMC (KodeKarnage)
@@ -9,8 +9,17 @@
     See LICENSES/GPL-2.0-or-later for more information.
 """
 
+import os
+
 import xbmcgui
 from osmcsettings import service_entry
+from osmccommon.osmc_logging import StandardLogger
 
-if __name__ == '__main__':
+ADDON_ID = 'service.osmc.settings'
+
+log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
+
+if __name__ == "__main__":
+    log('Service starting ...')
     service_entry.Main(window=xbmcgui.Window(10000))
+    log('Service shutdown.')

@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-07-31 23:36+0000\n"
+"Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
+"Language-Team: German <http://translate.osmc.tv/projects/osmc/my-osmc-services/de_de/>\n"
+"Language: de_de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "Apply"
+msgstr "Anwenden"
+
+msgctxt "#32002"
+msgid "Exit"
+msgstr "Schließen"
+
+msgctxt "#32003"
+msgid " (running)"
+msgstr " -(laufend)"
+
+msgctxt "#32004"
+msgid " (enabled)"
+msgstr " -(aktiviert)"
+
+msgctxt "#32005"
+msgid " (stopped)"
+msgstr " -(gestoppt)"
+
+msgctxt "#32006"
+msgid "Pending Actions"
+msgstr "Ausstehende Aktionen"
+
+msgctxt "#32007"
+msgid "Enable"
+msgstr "Aktivieren"
+
+msgctxt "#32008"
+msgid "Disable"
+msgstr "Deaktivieren"

@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-08-01 00:07+0000\n"
+"Last-Translator: Weblate Admin <email@samnazarko.co.uk>\n"
+"Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-common/cs_cz/>\n"
+"Language: cs_cz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "OSMC Log Uploader"
+msgstr "Odeslání logu OSMC"
+
+msgctxt "#32002"
+msgid "URL: %s"
+msgstr "Spojení URL: %s"
+
+msgctxt "#32003"
+msgid "Could not retrieve URL."
+msgstr "Nelze získat spojení URL."
+
+msgctxt "#32004"
+msgid "Retrieving Logs"
+msgstr "Získávám Logy"
+
+msgctxt "#32005"
+msgid "Combining and Writing Logs"
+msgstr "Kombinování a zápis logů"
+
+msgctxt "#32006"
+msgid "Retrieving %s"
+msgstr "Získávání %s"
+
+msgctxt "#32007"
+msgid "Copy Logs to SD Card Instead?"
+msgstr "Místo toho zapsat Logy na SD kartu?"
+
+msgctxt "#32008"
+msgid "Copy Complete"
+msgstr "Kopírování dokončeno"
+
+msgctxt "#32009"
+msgid "Copying logs to %s"
+msgstr "Kopírování logů na %s"
+
+msgctxt "#32010"
+msgid "Uploading logs"
+msgstr "Odesílání logů"
+
+msgctxt "#32011"
+msgid "Upload Complete"
+msgstr "Odeslání dokončeno"

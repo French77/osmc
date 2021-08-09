@@ -81,7 +81,7 @@ GUI_IDS = {
     10406: 'Tethering (Ethernet) - Disable Button',
     5000: 'WiFi panel',
     6000: 'Bluetooth paired devices panel',
-    7000: 'Bluetooth discoverd devices panel',
+    7000: 'Bluetooth discovered devices panel',
     105: 'MySQL',
     1050: 'MySQL Panel',
     10510: 'MySQL Video Database toggle',
@@ -96,7 +96,7 @@ GUI_IDS = {
     10515: 'MySQL Video Database pass',
     910515: 'MySQL Video Database pass Value',
     10580: 'MySQL Video Database Import Watched Status',
-    10590: 'MySQL Video Database Import Resum Point',
+    10590: 'MySQL Video Database Import Resume Point',
     10520: 'MySQL Music Database toggle',
     10521: 'MySQL Music Database Name',
     910521: 'MySQL Music Database Name Value',
@@ -1369,7 +1369,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                 if not connection_status:
                     # 'Connection to '                  'failed'
-                    message = self.lang(32043) + ' ' + ssid + ' ' + self.lang(32025)
+                    message = self.lang(32024) + ' ' + ssid + ' ' + self.lang(32025)
                     #                                                   'Wireless'
                     DIALOG.notification(self.lang(32041), message, time=2500, sound=False)
 
@@ -1540,7 +1540,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                         #         'Connection to '                       'failed'
                         message = self.lang(32024) + ' ' + alias + ' ' + self.lang(32025)
                         #                                                     'Bluetooth'
-                        DIALOG.notification(self.lang(32020), message, time=2500, sound=False)
+                        DIALOG.notification(self.lang(32003), message, time=2500, sound=False)
                         self.clear_busy_dialogue()
                         return
 
@@ -1561,7 +1561,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
             #         'Connection to'                       'failed'
             message = self.lang(32024) + ' ' + alias + ' ' + self.lang(32025)
             #                   'Bluetooth'
-            DIALOG.notification(self.lang(32020), message, time=2500, sound=False)
+            DIALOG.notification(self.lang(32003), message, time=2500, sound=False)
 
         return connected
 

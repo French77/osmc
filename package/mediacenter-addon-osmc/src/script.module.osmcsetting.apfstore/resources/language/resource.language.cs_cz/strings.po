@@ -1,0 +1,90 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-08-01 00:07+0000\n"
+"Last-Translator: Weblate Admin <email@samnazarko.co.uk>\n"
+"Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-app-store/cs_cz/>\n"
+"Language: cs_cz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "Install: %s"
+msgstr "Instalovat: %s"
+
+msgctxt "#32002"
+msgid "Uninstall: %s"
+msgstr "Odinstalovat: %s"
+
+msgctxt "#32003"
+msgid "Install"
+msgstr "Instalovat"
+
+msgctxt "#32004"
+msgid "Uninstall"
+msgstr "Odinstalovat"
+
+msgctxt "#32005"
+msgid "Installed"
+msgstr "Nainstalováno"
+
+msgctxt "#32006"
+msgid "Apply"
+msgstr "Použít"
+
+msgctxt "#32007"
+msgid "Install Item Count"
+msgstr "Instalovat položky Count"
+
+msgctxt "#32008"
+msgid "Remove Item Count"
+msgstr "Odinstalovat položky Count"
+
+msgctxt "#32009"
+msgid "Exit"
+msgstr "Ukončit"
+
+msgctxt "#32010"
+msgid "Information"
+msgstr "Informace"
+
+msgctxt "#32011"
+msgid "[B]Name[/B]"
+msgstr "[B]Jméno[/B]"
+
+msgctxt "#32012"
+msgid "Last Updated"
+msgstr "Poslední aktualizované"
+
+msgctxt "#32013"
+msgid "Maintainer"
+msgstr "Správce"
+
+msgctxt "#32014"
+msgid "Version"
+msgstr "Verze"
+
+msgctxt "#32015"
+msgid "Summary"
+msgstr "Souhrn"
+
+msgctxt "#32016"
+msgid "Cancel"
+msgstr "Zrušit"
+
+msgctxt "#32017"
+msgid "Error"
+msgstr "Chyba"
+
+msgctxt "#32018"
+msgid "App Store not available on unsupported Alphas."
+msgstr "Obchod App Store není dostupný na nepodporovaných Alfa úložištích."
+
+msgctxt "#32019"
+msgid "Please install the latest version of OSMC."
+msgstr "Prosím nainstalujte poslední verzi OSMC."

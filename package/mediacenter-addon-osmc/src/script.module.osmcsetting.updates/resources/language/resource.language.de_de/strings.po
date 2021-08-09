@@ -1,0 +1,662 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-07-31 23:36+0000\n"
+"Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
+"Language-Team: German <http://translate.osmc.tv/projects/osmc/my-osmc-updates/de_de/>\n"
+"Language: de_de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "Schedule"
+msgstr "Zeitplan"
+
+msgctxt "#32002"
+msgid "How often do you want to check for updates?"
+msgstr "Wie oft möchten Sie auf Updates prüfen?"
+
+msgctxt "#32003"
+msgid "Never"
+msgstr "Niemals"
+
+msgctxt "#32004"
+msgid "Daily"
+msgstr "Täglich"
+
+msgctxt "#32005"
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+msgctxt "#32006"
+msgid "Monthly"
+msgstr "Monatlich"
+
+msgctxt "#32007"
+msgid "Day"
+msgstr "Tag"
+
+msgctxt "#32008"
+msgid "Monday"
+msgstr "Montag"
+
+msgctxt "#32009"
+msgid "Tuesday"
+msgstr "Dienstag"
+
+msgctxt "#32010"
+msgid "Wednesday"
+msgstr "Mittwoch"
+
+msgctxt "#32011"
+msgid "Thursday"
+msgstr "Donnerstag"
+
+msgctxt "#32012"
+msgid "Friday"
+msgstr "Freitag"
+
+msgctxt "#32013"
+msgid "Saturday"
+msgstr "Samstag"
+
+msgctxt "#32014"
+msgid "Sunday"
+msgstr "Sonntag"
+
+msgctxt "#32015"
+msgid "Days before/after month-end"
+msgstr "Tage vor/nach dem Monatsende"
+
+msgctxt "#32016"
+msgid "Do you want to choose a specific time to check?"
+msgstr "Möchten Sie eine bestimmte Zeit zum Prüfen einstellen?"
+
+msgctxt "#32017"
+msgid "Random"
+msgstr "Zufällig"
+
+msgctxt "#32018"
+msgid "Specific"
+msgstr "Spezifisch"
+
+msgctxt "#32019"
+msgid "Hour"
+msgstr "Stunde"
+
+msgctxt "#32020"
+msgid "Location entry method"
+msgstr "Standort-Eingabemethode"
+
+msgctxt "#32021"
+msgid "Browsed"
+msgstr "Durchsucht"
+
+msgctxt "#32022"
+msgid "Typed"
+msgstr "Eingegeben"
+
+msgctxt "#32023"
+msgid "Click to Type"
+msgstr "Zum Eingeben klicken"
+
+msgctxt "#32024"
+msgid "Click to Browse"
+msgstr "Zum Durchsuchen klicken"
+
+msgctxt "#32025"
+msgid "Select files/folders to backup"
+msgstr "Dateien/Ordner zum Sichern auswählen"
+
+msgctxt "#32046"
+msgid "Suppress on-screen progress updates"
+msgstr "On-Screen-Fortschrittsupdates unterdrücken"
+
+msgctxt "#32053"
+msgid "Install available updates Now"
+msgstr "Verfügbare Updates jetzt installieren"
+
+msgctxt "#32056"
+msgid "Scan for updates now"
+msgstr "Jetzt auf Updates prüfen"
+
+msgctxt "#32057"
+msgid "Prompt for all actions"
+msgstr "Aufforderung für jede Aktion"
+
+msgctxt "#32058"
+msgid "Display icon on home screen only"
+msgstr "Icon nur über dem Hauptmenü anzeigen"
+
+msgctxt "#32059"
+msgid "When updating..."
+msgstr "Während des Updates..."
+
+msgctxt "#32060"
+msgid "Download and display icon"
+msgstr "Herunterladen und Icon anzeigen"
+
+msgctxt "#32061"
+msgid "Download and install automatically"
+msgstr "Herunterladen und automatisch installieren"
+
+msgctxt "#32062"
+msgid "Download, install, auto-restart if needed"
+msgstr "Herunterladen, installieren, automatisch neustarten, falls nötig"
+
+msgctxt "#32063"
+msgid "Do not prompt, display icon, or take any action"
+msgstr "Nicht auffordern, Icon anzeigen oder eine Aktion durchführen"
+
+msgctxt "#32064"
+msgid "Action when updates are found"
+msgstr "Aktionen, falls Updates gefunden worden sind"
+
+msgctxt "#32065"
+msgid "Only show prompts on the Home screen"
+msgstr "Aufforderungen nur über dem Hauptmenü anzeigen"
+
+msgctxt "#32066"
+msgid "Icon Position Horizontal (% of screen)"
+msgstr "Icon-Position horizontal (% des Birdschirms)"
+
+msgctxt "#32067"
+msgid "Icon Position Vertical (% of screen)"
+msgstr "Icon-Position vertikal (% des Birdschirms)"
+
+msgctxt "#32068"
+msgid "Do not show icon on home screen"
+msgstr "Icon nicht über dem Hauptmenü anzeigen"
+
+msgctxt "#32069"
+msgid "Only check for updates if system is idle for 1 minute"
+msgstr "Nur nach Updates suchen, wenn sich das System für 1 Minute im Leerlauf befindet"
+
+msgctxt "#32070"
+msgid "Do not check for updates during playback"
+msgstr "Nicht während der Wiedergabe nach Updates suchen"
+
+msgctxt "#32071"
+msgid "Delay (minutes)"
+msgstr "Verzögerung (Minuten)"
+
+msgctxt "#32072"
+msgid "OSMC Update Available"
+msgstr "OSMC-Updates verfügbar"
+
+msgctxt "#32073"
+msgid "Updates have been downloaded and can be installed immediately."
+msgstr "Updates sind heruntergeladen worden und können umgehend installiert werden."
+
+msgctxt "#32074"
+msgid "Would you like to install the updates now?"
+msgstr "Möchten Sie die Updates jetzt installieren?"
+
+msgctxt "#32075"
+msgid "Updates have been downloaded, but Kodi will need to exit to install them."
+msgstr "Updates sind heruntergeladen worden, allerdings muss Kodi beenden werden, um diese zu installieren."
+
+msgctxt "#32076"
+msgid "Would you like to exit and install the updates now?"
+msgstr "Möchten Sie beenden und die Updates jetzt installieren?"
+
+msgctxt "#32077"
+msgid "OSMC Updater"
+msgstr "OSMC-Updater"
+
+msgctxt "#32078"
+msgid "Update Running."
+msgstr "Update wird durchgeführt."
+
+msgctxt "#32079"
+msgid "Packages have been installed that require a reboot."
+msgstr "Pakete, die einen Neustart benötigen, sind installiert worden."
+
+msgctxt "#32080"
+msgid "Would you like to reboot now?"
+msgstr "Möchten Sie jetzt neustarten?"
+
+msgctxt "#32081"
+msgid "Reboot Now"
+msgstr "Jetzt neustarten"
+
+msgctxt "#32082"
+msgid "Reboot Later"
+msgstr "Später neustarten"
+
+msgctxt "#32083"
+msgid "There are updates that are available for install."
+msgstr "Es sind Updates zum Installieren verfügbar."
+
+msgctxt "#32084"
+msgid "Would you like to install them now?"
+msgstr "Möchten Sie diese jetzt installieren?"
+
+msgctxt "#32085"
+msgid "Fair enough, then."
+msgstr "In Ordnung."
+
+msgctxt "#32086"
+msgid "You can install them from within the OSMC settings later."
+msgstr "Sie können diese aus den OSMC-Einstellungen heraus später installieren."
+
+msgctxt "#32087"
+msgid "OSMC Update Error"
+msgstr "OSMC-Updatefehler"
+
+msgctxt "#32088"
+msgid "Error installing: %s "
+msgstr "Fehler bei der Installation von: %s- "
+
+msgctxt "#32089"
+msgid "Please report this on the OSMC forum."
+msgstr "Bitte melden Sie dies im OSMC-Forum."
+
+msgctxt "#32090"
+msgid "Update"
+msgstr "Update"
+
+msgctxt "#32091"
+msgid "Operations successfully completed."
+msgstr "Arbeiten erfolgreich abgeschlossen."
+
+msgctxt "#32092"
+msgid "There are no updates available."
+msgstr "Es sind keine Updates verfügbar."
+
+msgctxt "#32093"
+msgid "Update Settings"
+msgstr "Update-Einstellungen"
+
+msgctxt "#32094"
+msgid "Manual Controls"
+msgstr "Manuelle Einstellungen"
+
+msgctxt "#32095"
+msgid "Download updates, then prompt"
+msgstr "Updates herunterladen, dann auffordern"
+
+msgctxt "#32096"
+msgid "Backup"
+msgstr "Sicherung"
+
+msgctxt "#32097"
+msgid "Backup error. Details in log."
+msgstr "Sicherungsfehler. Details im Log."
+
+msgctxt "#32098"
+msgid "Items successfully restored."
+msgstr "Elemente erfolgreich wiederhergestellt."
+
+msgctxt "#32099"
+msgid "Restoring guisettings.xml requires Kodi to restart."
+msgstr "Das Wiederherstellen der guisettings.xml erfordert das Neustarten von Kodi."
+
+msgctxt "#32100"
+msgid "Restart Now"
+msgstr "Jetzt neustarten"
+
+msgctxt "#32101"
+msgid "Restart Later"
+msgstr "Später neustarten"
+
+msgctxt "#32102"
+msgid "Error"
+msgstr "Fehler"
+
+msgctxt "#32103"
+msgid "Unsupported Alphas cannot be upgraded."
+msgstr "Nicht unterstützte Alphas können nicht upgegradet werden."
+
+msgctxt "#32104"
+msgid "Please install the latest version of OSMC."
+msgstr "Bitte die neueste OSMC-Version installieren."
+
+msgctxt "#32105"
+msgid "Run Backup of settings now."
+msgstr "Einstellungssicherung jetzt erstellen."
+
+msgctxt "#32106"
+msgid "Restore a backup of settings now."
+msgstr "Einstellungssicherung jetzt wiederherstellen."
+
+msgctxt "#32107"
+msgid "Backup before each update (excludes manual update)."
+msgstr "Vor jedem Update sichern (schließt keine manuellen Updates ein)."
+
+msgctxt "#32108"
+msgid "Number of backup files to keep (0 for keep all)"
+msgstr "Anzahl der zu behaltenden Sicherungsdateien (0 für das Behalten aller)"
+
+msgctxt "#32109"
+msgid "Backups"
+msgstr "Sicherungen"
+
+msgctxt "#32110"
+msgid "OSMC Restore"
+msgstr "OSMC-Wiederherstellung"
+
+msgctxt "#32111"
+msgid "Minute"
+msgstr "Minute"
+
+msgctxt "#32112"
+msgid "Some packages were not installed/removed."
+msgstr "Einige Pakete sind nicht installiert/entfernt worden."
+
+msgctxt "#32113"
+msgid "Details have been written to the Kodi log."
+msgstr "Details sind in das Kodi-Log geschrieben worden."
+
+msgctxt "#32114"
+msgid "Apply HotFix"
+msgstr "Hotfix anwenden"
+
+msgctxt "#32115"
+msgid "Enter HotFix ID"
+msgstr "Hotfix-ID eingeben"
+
+msgctxt "#32116"
+msgid "OSMC HotFix"
+msgstr "OSMC-Hotfix"
+
+msgctxt "#32117"
+msgid "HotFixes run commandline code on your device."
+msgstr "Hotfixes führen Kommandozeilencode auf Ihrem Gerät aus."
+
+msgctxt "#32118"
+msgid "Only use Hotfixes provided by people you trust."
+msgstr "Nutzen Sie nur Hotfixes von vertrauten Personen."
+
+msgctxt "#32119"
+msgid "Are you sure you would like to apply this HotFix?"
+msgstr "Sind Sie sicher, dass Sie diesen Hotfix anwenden wollen?"
+
+msgctxt "#32120"
+msgid "OSMC HotFix Uploader"
+msgstr "OSMC-Hotfix-Uploader"
+
+msgctxt "#32121"
+msgid "HotFix Upload failed."
+msgstr "Hotfix-Hochladen fehlgeschlagen."
+
+msgctxt "#32122"
+msgid "Save the output to SD card?"
+msgstr "Die Ausgabe auf einer SD-Karte speichern?"
+
+msgctxt "#32123"
+msgid "HotFix output successfully uploaded."
+msgstr "Hotfix-Ausgabe erfolgreich hochgeladen."
+
+msgctxt "#32124"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgctxt "#32125"
+msgid "Proceed"
+msgstr "Fortsetzen"
+
+msgctxt "#32126"
+msgid "Visit osmc.tv/blog for more details."
+msgstr "osmc.tv/blog für weitere Details besuchen."
+
+msgctxt "#32127"
+msgid "Major updates may cause addon and database incompatibility."
+msgstr "Große Updates können Addon- und Datenbank-Inkompatibilitäten verursachen."
+
+msgctxt "#32128"
+msgid "Detected major update for Kodi."
+msgstr "Großes Update for Kodi gefunden."
+
+msgctxt "#32129"
+msgid "Insufficient space for Update to proceed."
+msgstr "Ungenügender Platz für das Fortsetzen des Updates."
+
+msgctxt "#32130"
+msgid "Free some storage space and try again later."
+msgstr "Einigen Speicherplatz freigeben und später erneut versuchen."
+
+msgctxt "#32131"
+msgid "Unable to connect to the Update servers."
+msgstr "Keine Verbindung zum Updateserver möglich."
+
+msgctxt "#32132"
+msgid "Please try again later."
+msgstr "Später erneut versuchen."
+
+msgctxt "#32133"
+msgid "The installed program requires a restart."
+msgstr "Das installierte Program erfordert einen Neustart."
+
+msgctxt "#32134"
+msgid "Reset Kodi on next reboot"
+msgstr "Kodi beim nächsten Neustart zurücksetzen"
+
+msgctxt "#32135"
+msgid "[COLOR red]Warning: This will delete ALL user data in Kodi; skins, addons, databases, settings, etc.[/COLOR]"
+msgstr "[COLOR red]Warnung: Dies wird ALLE Kodi-Nutzerdaten löschen; Skins, Addons, Datenbanken, Einstellungen, etc.[/COLOR]"
+
+msgctxt "#32136"
+msgid "OSMC"
+msgstr "OSMC"
+
+msgctxt "#32137"
+msgid "Update not permitted."
+msgstr "Update nicht zugelassen."
+
+msgctxt "#32138"
+msgid "Unable to reach internet."
+msgstr "Keine Internetverbindung."
+
+msgctxt "#32139"
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+msgctxt "#32140"
+msgid "Some items failed to restore."
+msgstr "Einige Elemente konnten nicht wiederhergestellt werden."
+
+msgctxt "#32141"
+msgid "See log for details."
+msgstr "Siehe Logs für Details."
+
+msgctxt "#32142"
+msgid "Your system is running out of storage (<%sMB left)."
+msgstr "Das System hat nicht mehr genügend Speicherplatz (<%sMB left)."
+
+msgctxt "#32143"
+msgid "Would you like to try and clear unused system files?"
+msgstr "Möchten Sie versuchen, ungenutzte Systemdateien zu entfernen?"
+
+msgctxt "#32144"
+msgid "Try rebooting a couple times to clear out temporary files."
+msgstr "Einige Neustarts zum Leeren temporärer Dateien versuchen."
+
+msgctxt "#32145"
+msgid "Restore failed"
+msgstr "Wiederherstellung fehlgeschlagen"
+
+msgctxt "#32146"
+msgid "Failure to reading the file."
+msgstr "Lesen der Datei fehlgeschlagen."
+
+msgctxt "#32147"
+msgid "OSMC Backup"
+msgstr "OSMC-Sicherung"
+
+msgctxt "#32148"
+msgid "Location for backup not provided."
+msgstr "Sicherungsort nicht festgelegt."
+
+msgctxt "#32149"
+msgid "Set the backup folder in MyOSMC."
+msgstr "Sicherungsordner in My OSMC festlegen."
+
+msgctxt "#32150"
+msgid "Insufficent diskspace at target location."
+msgstr "Ungenügender Speicherplatz am Zielort."
+
+msgctxt "#32151"
+msgid "Backup location not writeable."
+msgstr "Sicherungsort nicht beschreibbar."
+
+msgctxt "#32152"
+msgid "Backup failed"
+msgstr "Sicherung fehlgeschalgen"
+
+msgctxt "#32153"
+msgid "Backup failed to copy the tar file."
+msgstr "Sicherung beim Kopieren der tar-Datei fehgeschlagen."
+
+msgctxt "#32154"
+msgid "Select a backup file"
+msgstr "Backupdatei auswählen"
+
+msgctxt "#32155"
+msgid "Browse to backup file"
+msgstr "Nach Backupdatei durchsuchen"
+
+msgctxt "#32156"
+msgid "Restore failed to copy the file."
+msgstr "Wiederherstellungen am Kopieren der Datei gescheitert."
+
+msgctxt "#32157"
+msgid "Could not identify contents of backup file."
+msgstr "Inhalte der Sicherungsdatei konnten nicht festgestellt werden."
+
+msgctxt "#32158"
+msgid "Items successfully restored"
+msgstr "Elemente erfolgreich wiederhergestellt"
+
+msgctxt "#32159"
+msgid "Starting backup"
+msgstr "Sicherung beginnen"
+
+msgctxt "#32160"
+msgid "Transferring backup file"
+msgstr "Sicherungsdatei übertragen"
+
+msgctxt "#32161"
+msgid "Removing old backup file: %s"
+msgstr "Alte Sicherungsdatei entfernen: %s"
+
+msgctxt "#32162"
+msgid "Select items to restore"
+msgstr "Wiederherzustellende Elemente auswählen"
+
+msgctxt "#32163"
+msgid "Overwrite existing files"
+msgstr "Bestehende Dateien überschreiben"
+
+msgctxt "#32164"
+msgid "Select new restore folder"
+msgstr "Neuen Wiederherstellungsordner auswählen"
+
+msgctxt "#32165"
+msgid "Browse to restore location"
+msgstr "Nach Wiederherstellungsort durchsuchen"
+
+msgctxt "#32166"
+msgid "Addons Folder"
+msgstr "Addon-Ordner"
+
+msgctxt "#32167"
+msgid "Addon Data Folder"
+msgstr "Addon-Daten-Ordner"
+
+msgctxt "#32168"
+msgid "Database Folder"
+msgstr "Datenbank-Ordner"
+
+msgctxt "#32169"
+msgid "Keymaps Folder"
+msgstr "Tastenzuordnungs-Ordner"
+
+msgctxt "#32170"
+msgid "Library Folder"
+msgstr "Bibliotheks-Ordner"
+
+msgctxt "#32172"
+msgid "Playlists Folder"
+msgstr "Wiedergabelisten-Ordner"
+
+msgctxt "#32173"
+msgid "Profiles Folder"
+msgstr "Profile-Ordner"
+
+msgctxt "#32174"
+msgid "Thumbnails Folder (very large)"
+msgstr "Miniaturansichten-Ordner (sehr groß)"
+
+msgctxt "#32175"
+msgid "Save States Folder"
+msgstr "Speicherstands-Ordner"
+
+msgctxt "#32176"
+msgid "Tvheadend Folder"
+msgstr "Tvheadend-Ordner"
+
+msgctxt "#32177"
+msgid "Autofs"
+msgstr "Autofs"
+
+msgctxt "#32178"
+msgid "Authorized SSH Keys"
+msgstr "Autorisierte SSH-Schlüssel"
+
+msgctxt "#32179"
+msgid "Addons"
+msgstr "Addons"
+
+msgctxt "#32180"
+msgid "Addon Data"
+msgstr "Addon-Daten"
+
+msgctxt "#32181"
+msgid "Database"
+msgstr "Datenbank"
+
+msgctxt "#32182"
+msgid "Keymaps"
+msgstr "Tastenzuordnungen"
+
+msgctxt "#32183"
+msgid "Library"
+msgstr "Bibliothek"
+
+msgctxt "#32184"
+msgid "Playlists"
+msgstr "Wiedergabelisten"
+
+msgctxt "#32185"
+msgid "Profiles"
+msgstr "Profile"
+
+msgctxt "#32186"
+msgid "Thumbnails"
+msgstr "Miniaturansichten"
+
+msgctxt "#32187"
+msgid "Save States"
+msgstr "Speicherstände"
+
+msgctxt "#32188"
+msgid "Tvheadend"
+msgstr "Tvheadend"
+
+msgctxt "#32189"
+msgid "Directory "
+msgstr "Verzeichnis- "
+
+msgctxt "#32190"
+msgid "Mixed"
+msgstr "Gemischt"
+
+msgctxt "#32191"
+msgid "File"
+msgstr "Datei"

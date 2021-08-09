@@ -1,0 +1,258 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-08-01 00:07+0000\n"
+"Last-Translator: Weblate Admin <email@samnazarko.co.uk>\n"
+"Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-service/cs_cz/>\n"
+"Language: cs_cz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "OSMC Settings"
+msgstr "Nastavení OSMC"
+
+msgctxt "#32002"
+msgid "OSMC"
+msgstr "OSMC"
+
+msgctxt "#32005"
+msgid "Please wait a few seconds and try again."
+msgstr "Prosím počkejte několik sekund a zkuste to znovu."
+
+msgctxt "#32006"
+msgid "If this error persists, try disabling then re-enabling the OSMC Settings Service."
+msgstr "Pokud tato chyba přetrvává, zkuste v nastavení OSMC službu vypnout a znovu zapnout."
+
+msgctxt "#32007"
+msgid "My OSMC service is unavailable"
+msgstr "Služba My OSMC je nedostupná"
+
+msgctxt "#32008"
+msgid "Welcome"
+msgstr "Vítejte"
+
+msgctxt "#32009"
+msgid "Timezone"
+msgstr "Časové pásmo"
+
+msgctxt "#32010"
+msgid "License"
+msgstr "Licence"
+
+msgctxt "#32011"
+msgid "Networking"
+msgstr "Síť"
+
+msgctxt "#32012"
+msgid "Finish"
+msgstr "Konec"
+
+msgctxt "#32013"
+msgid "Continue"
+msgstr "Pokračovat"
+
+msgctxt "#32014"
+msgid "OSMC could not automatically connect to the Internet."
+msgstr "OSMC se nemohlo automaticky připojit k internetu."
+
+msgctxt "#32015"
+msgid "I'd like to set up networking manually"
+msgstr "Chtěl bych nastavit síť ručně"
+
+msgctxt "#32016"
+msgid "I'll set up networking later"
+msgstr "Chtěl bych nastavit síť později"
+
+msgctxt "#32017"
+msgid "That's it! You're now ready to enjoy OSMC."
+msgstr "A je to! Nyní jste připraveni si OSMC užít."
+
+msgctxt "#32018"
+msgid "If you need any help we have a wealth of resources"
+msgstr "Pokud potřebujete pomoc, máme spoustu zdrojů"
+
+msgctxt "#32019"
+msgid "to help you get the best of OSMC."
+msgstr "abychom vám pomohli získat to nejlepší z OSMC."
+
+msgctxt "#32020"
+msgid "We hope you enjoy using OSMC"
+msgstr "Doufáme, že vás používání OSMC baví"
+
+msgctxt "#32021"
+msgid "~ Team OSMC ~"
+msgstr "~ Vývojáři OSMC ~"
+
+msgctxt "#32022"
+msgid "I'd like to stay updated with OSMC news by email"
+msgstr "Chtěl bych zůstat informován o novinkách OSMC e-mailem"
+
+msgctxt "#32023"
+msgid "Warranty"
+msgstr "Záruka"
+
+msgctxt "#32024"
+msgid "Please Wait..."
+msgstr "Prosím čekejte..."
+
+msgctxt "#32025"
+msgid "Configuring Network Connection"
+msgstr "Nastavení připojení sítě"
+
+msgctxt "#32026"
+msgid "Check for Updates?"
+msgstr "Zkontrolovat aktualizace?"
+
+msgctxt "#32027"
+msgid "As you've installed OSMC via NOOBS,"
+msgstr "Protože jste nainstalovali OSMC přes NOOBS,"
+
+msgctxt "#32028"
+msgid "we recommend you ensure you're on the latest version."
+msgstr "doporučujeme vám ověřit, zda používáte nejnovější verzi."
+
+msgctxt "#32029"
+msgid "Would you like to check for updates now?"
+msgstr "Chcete nyní zkontrolovat aktualizace?"
+
+msgctxt "#32030"
+msgid "Thanks for trying OSMC."
+msgstr "Děkujeme, že jste vyzkoušeli OSMC."
+
+msgctxt "#32031"
+msgid "We recommend you check for updates now to ensure you're on the latest version."
+msgstr "Doporučujeme vám zkontrolovat aktualizace, abyste měli jistotu, že používáte nejnovější verzi."
+
+msgctxt "#32032"
+msgid "What would you like to do?"
+msgstr "Co byste rádi udělali?"
+
+msgctxt "#32033"
+msgid "at osmc.tv/help and a bustling community "
+msgstr "na osmc.tv/help a u komunity nadšenců "
+
+msgctxt "#32034"
+msgid "just as much as we enjoy developing it!"
+msgstr "stejně jako nás baví jeho vývoj!"
+
+msgctxt "#32035"
+msgid "Give your device a name"
+msgstr "Dejte svému zařízení jméno"
+
+msgctxt "#32036"
+msgid "SSH Service is Enabled"
+msgstr "Služba SSH je Povolena"
+
+msgctxt "#32037"
+msgid "SSH Service is Disabled"
+msgstr "Služba SSH je Zakázána"
+
+msgctxt "#32038"
+msgid "Please enter your password"
+msgstr "Prosím zadejte své heslo"
+
+msgctxt "#32039"
+msgid "Please confirm your password"
+msgstr "Prosím potvrďte své heslo"
+
+msgctxt "#32040"
+msgid "Password mismatch"
+msgstr "Heslo nesouhlasí"
+
+msgctxt "#32041"
+msgid "Would you like to enter your password in plain text?"
+msgstr "Chcete zadat heslo jako prostý text?"
+
+msgctxt "#32042"
+msgid "Your password entries did not match"
+msgstr "Zadané heslo nesouhlasí"
+
+msgctxt "#32043"
+msgid "Name your device"
+msgstr "Název vašeho zařízení"
+
+msgctxt "#32044"
+msgid "Click here to change/confirm password:"
+msgstr "Kliknutím zde změníte/potvrdíte heslo:"
+
+msgctxt "#32045"
+msgid "Please enter your email"
+msgstr "Prosím zadejte svůj email"
+
+msgctxt "#32046"
+msgid "Confirm"
+msgstr "Potvrdit"
+
+msgctxt "#32047"
+msgid "My OSMC"
+msgstr "My OSMC"
+
+msgctxt "#32048"
+msgid "App Store"
+msgstr "Obchod App Store"
+
+msgctxt "#32049"
+msgid "This module is where you can grab awesome APFs like..."
+msgstr "Tento modul je místo, kde můžete najít úžasné APF jako ..."
+
+msgctxt "#32050"
+msgid "Log Uploader"
+msgstr "Odesílání Logů"
+
+msgctxt "#32051"
+msgid "This module helps with debugging and troubleshooting by retrieving logs, various xml, and config information from your system and uploading them in a single file.[CR]Once uploading is complete, you are provided with a URL which you can share on the OSMC forums.[CR]The information stored in the URL will help others diagnose your issue and decrease the amount of time it takes to find a resolution."
+msgstr "Tento modul pomáhá při ladění a odstraňování problémů načítáním logů, různých souborů XML a konfiguračních informací z vašeho systému a jejich nahráváním do jednoho souboru. [CR] Po dokončení nahrávání vám bude poskytnuta adresa URL, kterou můžete sdílet na fórech OSMC. [CR] Informace uložené v adrese URL pomohou ostatním diagnostikovat váš problém a zkrátí dobu potřebnou k nalezení řešení."
+
+msgctxt "#32052"
+msgid "Network"
+msgstr "Síť"
+
+msgctxt "#32053"
+msgid "This is network settings, it contains settings for the network."
+msgstr "Toto je nastavení sítě, obsahuje nastavení pro připojení k síti."
+
+msgctxt "#32054"
+msgid "Pi Config"
+msgstr "Nastavení Raspberry"
+
+msgctxt "#32055"
+msgid "The Raspberry Pi doesn't have a conventional BIOS. System configuration parameters are stored in a \"config.txt\" file. For more detail, visit http://elinux.org/RPiconfig[CR]This settings module allows you to edit your config.txt from within OSMC using a graphical interface.[CR][CR]The module includes:[CR]- display rotation[CR]- hdmi_safe & hdmi_boost[CR]- hdmi_group & hdmi_mode[CR]- function to save edid to file[CR]- sdtv_mode & sdtv_aspect[CR]- GPU memory split[CR]- MPG2 & WVC1 licences (including status)[CR]- your Pi's serial number[CR][CR]Finally, there is a Config Editor that will allow you to quickly add, edit, or delete lines in your config.txt.[CR][CR]Overclock settings are set using the Pi Overclock module."
+msgstr "Raspberry Pi nemá standardní BIOS. Konfigurační parametry systému jsou uloženy v souboru „config.txt“. Více podrobností naleznete na stránce http://elinux.org/RPiconfig[CR]Tento modul nastavení umožňuje upravit soubor config.txt v rámci OSMC pomocí grafického rozhraní. [CR] [CR] Modul obsahuje: [CR] - rotace displeje [CR] - nastavení hdmi_safe & hdmi_boost [CR] - nastavení hdmi_group & hdmi_mode [CR] - funkce pro uložení edid nastavení do souboru [CR] - nastavení sdtv_mode & sdtv_aspect [CR] - rozdělení paměti GPU [CR] - licence MPG2 a WVC1 (včetně stavu) [CR] - sériové číslo vašeho Pi [CR] [CR] Nakonec je zde Editor Konfigurace, který vám umožní rychle přidávat, upravovat nebo mazat řádky v souboru config.txt. [CR] [CR] Nastavení přetaktování se nastavují pomocí modulu Pi Přetaktování."
+
+msgctxt "#32056"
+msgid "Remotes"
+msgstr "Ovládání"
+
+msgctxt "#32057"
+msgid "This module allows the user to select the appropriate lirc.conf file for their remote."
+msgstr "Tento modul umožňuje uživateli vybrat vhodný soubor lirc.conf pro svůj dálkový ovladač."
+
+msgctxt "#32058"
+msgid "Services"
+msgstr "Služby"
+
+msgctxt "#32059"
+msgid "Control OSMC services"
+msgstr "Ovládání OSMC služeb"
+
+msgctxt "#32060"
+msgid "Updates"
+msgstr "Aktualizace"
+
+msgctxt "#32061"
+msgid "Manage updates"
+msgstr "Řízení aktualizací"
+
+msgctxt "#32062"
+msgid "Developer"
+msgstr "Vývojář"
+
+msgctxt "#32063"
+msgid "Test walk through"
+msgstr "Vyzkoušejte procházku"

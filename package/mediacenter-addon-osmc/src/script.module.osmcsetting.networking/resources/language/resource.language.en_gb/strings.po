@@ -1,27 +1,20 @@
-# XBMC Media Center language file
 msgid ""
 msgstr ""
-"Project-Id-Version: XBMC Addons\n"
-"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: XBMC Translation Team\n"
-"Language-Team: English (http://www.transifex.com/projects/p/xbmc-addons/language/en/)\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: English\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: en\n"
+"Language: en_gb\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-# ---- Settings ----
 
 msgctxt "#32001"
 msgid "Tethering"
 msgstr ""
-
-# msgctxt "#32002"
-# msgid "Wireless Connection"
-# msgstr ""
 
 msgctxt "#32003"
 msgid "Bluetooth"
@@ -89,10 +82,6 @@ msgstr ""
 
 msgctxt "#32019"
 msgid "Available Devices"
-msgstr ""
-
-msgctxt "#32020"
-msgid "Bluetooth"
 msgstr ""
 
 msgctxt "#32021"
@@ -181,10 +170,6 @@ msgstr ""
 
 msgctxt "#32042"
 msgid "Disconnect from"
-msgstr ""
-
-msgctxt "#32043"
-msgid "Connection to"
 msgstr ""
 
 msgctxt "#32044"
@@ -324,7 +309,7 @@ msgid "MySQL"
 msgstr ""
 
 msgctxt "#32078"
-msgid "OSMC has detected MySQL details in your advancedsettings file and turned on "Waiting for Network" at boot. MySQL connection issues may be resolved on reboot."
+msgid "OSMC has detected MySQL details in your advancedsettings file and turned on \"Waiting for Network\" at boot. MySQL connection issues may be resolved on reboot."
 msgstr ""
 
 msgctxt "#32079"

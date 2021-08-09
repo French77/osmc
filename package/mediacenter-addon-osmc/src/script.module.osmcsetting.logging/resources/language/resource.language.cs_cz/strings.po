@@ -1,0 +1,166 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-08-01 00:07+0000\n"
+"Last-Translator: Weblate Admin <email@samnazarko.co.uk>\n"
+"Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-logging/cs_cz/>\n"
+"Language: cs_cz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "Upload Logs"
+msgstr "Odeslat Logy"
+
+msgctxt "#32002"
+msgid "All Configs and Logs"
+msgstr "Všechna nastavení a Logy"
+
+msgctxt "#32003"
+msgid "Kodi Log"
+msgstr "Log z Kodi"
+
+msgctxt "#32004"
+msgid "/boot/config.txt (Pi only)"
+msgstr "/boot/config.txt (pouze Pi)"
+
+msgctxt "#32005"
+msgid "OSMC Packages"
+msgstr "Balíčky OSMC"
+
+msgctxt "#32006"
+msgid "APT Logs"
+msgstr "Logy APT"
+
+msgctxt "#32012"
+msgid "Upload Selected Logs Now"
+msgstr "Odeslat vybrané logy teď"
+
+msgctxt "#32013"
+msgid "OSMC Log Uploader"
+msgstr "Odesílání Logů OSMC"
+
+msgctxt "#32014"
+msgid "URL: %s"
+msgstr "Připojení URL: %s"
+
+msgctxt "#32016"
+msgid "AdvancedSettings.xml"
+msgstr "Soubor AdvancedSettings.xml"
+
+msgctxt "#32017"
+msgid "/etc/fstab & /proc/mounts"
+msgstr "/etc/fstab a /proc/mounts"
+
+msgctxt "#32018"
+msgid "Sources.xml"
+msgstr "Soubor Sources.xml"
+
+msgctxt "#32019"
+msgid "Keyboard.xml"
+msgstr "Soubor Keyboard.xml"
+
+msgctxt "#32020"
+msgid "/proc/cmdline"
+msgstr "Soubor /proc/cmdline"
+
+msgctxt "#32021"
+msgid "System Journal"
+msgstr "Soubor se System Journal"
+
+msgctxt "#32022"
+msgid "All other packages"
+msgstr "Všechny ostatní balíčky"
+
+msgctxt "#32023"
+msgid "Could not retrieve URL."
+msgstr "Nelze získat připojení URL."
+
+msgctxt "#32025"
+msgid "Retrieving Logs"
+msgstr "Shromažďování Logů"
+
+msgctxt "#32026"
+msgid "Uploading and Retrieving URL"
+msgstr "Odesílání a získávání URL"
+
+msgctxt "#32027"
+msgid "Combining and Writing Logs"
+msgstr "Kombinování a zápis Logů"
+
+msgctxt "#32028"
+msgid "Kodi Old Log (excluded from All)"
+msgstr "soubor Kodi Old Log (vyřazen ze všech)"
+
+msgctxt "#32029"
+msgid "lircd.conf"
+msgstr "Soubor lircd.conf"
+
+msgctxt "#32030"
+msgid "/boot directory listing"
+msgstr "Soubor /boot directory listing"
+
+msgctxt "#32031"
+msgid "Kernel Details"
+msgstr "Detaily Kernelu"
+
+msgctxt "#32032"
+msgid "/etc/init.d directory listing"
+msgstr "Soubor /etc/init.d directory listing"
+
+msgctxt "#32033"
+msgid "/lib/systemd/system directory listing"
+msgstr "Soubor /lib/systemd/system directory listing"
+
+msgctxt "#32034"
+msgid "Free Memory"
+msgstr "Volná Paměť RAM"
+
+msgctxt "#32035"
+msgid "Free Diskspace"
+msgstr "Volný úložný prostor"
+
+msgctxt "#32036"
+msgid "Retrieving %s"
+msgstr "Získávání %s"
+
+msgctxt "#32037"
+msgid "Remote.xml"
+msgstr "Soubor Remote.xml"
+
+msgctxt "#32038"
+msgid "Copy Selected Logs to SD Card Now"
+msgstr "Kopírovat nyní vybrané Logy na SD kartu"
+
+msgctxt "#32039"
+msgid "Copy Logs to SD Card Instead?"
+msgstr "Místo toho kopírovat Logy na SD kartu?"
+
+msgctxt "#32040"
+msgid "Copy Complete"
+msgstr "Kopírování dokončeno"
+
+msgctxt "#32041"
+msgid "Kernel Message Log (dmesg)"
+msgstr "Soubor Kernel Message Log (dmesg)"
+
+msgctxt "#32042"
+msgid "Display Info"
+msgstr "Informace o displeji"
+
+msgctxt "#32043"
+msgid "Network Interface Configuration"
+msgstr "Nastavení síťového připojení"
+
+msgctxt "#32044"
+msgid "GUISettings.xml (includes audio settings)"
+msgstr "Soubor GUISettings.xml (včetně audio nastavení)"
+
+msgctxt "#32045"
+msgid "GUISettings (abridged)"
+msgstr "GUISettings (zkráceně)"

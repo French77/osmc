@@ -10,7 +10,9 @@
 """
 
 import argparse
+import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -57,8 +59,6 @@ TEMP_LOG_FILENAME = 'uploadlog.txt'
 TEMP_LOG_FILE = '/var/tmp/' + TEMP_LOG_FILENAME
 UPLOAD_LOC = 'https://paste.osmc.tv'
 
-HARDWARE_PREFIX = ''
-
 SETS = {
     'uname': {
         'order': 1,
@@ -85,6 +85,12 @@ SETS = {
                 'key': 'm4ls932a',
                 'ltyp': 'file_log',
                 'actn': '/etc/debian_version',
+            },
+            {
+                'name': 'OSMC Build Information',
+                'key': 'ps9k90Ws',
+                'ltyp': 'file_log',
+                'actn': '/etc/osmc_build_info',
             },
         ],
     },
@@ -470,51 +476,41 @@ SETS = {
                 'key': 'g0gjk991',
                 'ltyp': 'file_log',
                 'actn': '/sys/class/amhdmitx/amhdmitx0/disp_cap',
+                'hwid': '!rbp',
             },
             {
                 'name': 'Display Mode',
                 'key': 'Q72ho215',
                 'ltyp': 'file_log',
                 'actn': '/sys/class/amhdmitx/amhdmitx0/disp_mode',
+                'hwid': '!rbp',
             },
             {
                 'name': 'EDID',
                 'key': 'wE0go885',
                 'ltyp': 'file_log',
                 'actn': '/sys/class/amhdmitx/amhdmitx0/edid',
+                'hwid': '!rbp',
             },
             {
                 'name': 'Audio Cap',
                 'key': 'k3dRrf31',
                 'ltyp': 'file_log',
                 'actn': '/sys/class/amhdmitx/amhdmitx0/aud_cap',
+                'hwid': '!rbp',
             },
             {
-                'name': 'Pi EDID',
+                'name': 'edid-decode',
                 'key': 'wes0DM2l',
                 'ltyp': 'cl_log',
-                'actn': '/opt/vc/bin/tvservice -s',
-                'hwid': 'rbp',
+                'actn': '/usr/bin/edid-decode /sys/devices/virtual/amhdmitx/amhdmitx0/rawedid',
+                'hwid': 'vero',
             },
             {
-                'name': 'Pi CEA',
+                'name': 'edid-decode',
                 'key': 'su34JRse',
                 'ltyp': 'cl_log',
-                'actn': '/opt/vc/bin/tvservice -m CEA',
-                'hwid': 'rbp',
-            },
-            {
-                'name': 'Pi DMT',
-                'key': 'zsl2D3rt',
-                'ltyp': 'cl_log',
-                'actn': '/opt/vc/bin/tvservice -m DMT',
-                'hwid': 'rbp',
-            },
-            {
-                'name': 'Pi Audio Cap',
-                'key': 'szl3J3wq',
-                'ltyp': 'cl_log',
-                'actn': '/opt/vc/bin/tvservice -a',
+                'actn': '/usr/bin/edid-decode /sys/class/drm/card0-HDMI-A-1/edid',
                 'hwid': 'rbp',
             },
             {
@@ -751,6 +747,59 @@ class Main(object):
 
         self.arguments.sort(key=lambda x: x[1].get('order', 99))
 
+        self._hwid = ''
+
+    def hwid(self):
+        if self._hwid:
+            return self._hwid
+
+        with open('/proc/cmdline', 'r', encoding='utf-8') as f:
+            line = f.readline()
+
+        settings = line.split(' ')
+        settings = [item.split('=', maxsplit=1) for item in settings]
+        settings = [item for item in settings if not (len(item) == 1 and not item[0])]
+        settings = [item + [''] if len(item) == 1 else [item[0], item[1].strip('\n')]
+                    for item in settings]
+
+        for setting, value in settings:
+            if setting == 'osmcdev':
+                self._hwid = value
+                break
+
+        return self._hwid
+
+    def valid_hardware(self, hwid):
+        if not hwid:
+            return True
+
+        actual_hwid = self.hwid()
+
+        # hwid of 'vero' matches all vero hardware, 'vero3' matches exactly vero3
+        generic_match = not hwid[-1].isdigit()
+        # hwid of '!rpb' will matches all non rbp hardware
+        negative_match = hwid.startswith('!')
+
+        if negative_match:
+            # we know it's a negative match, remove ! for future comparisons
+            hwid = hwid.lstrip('!')
+
+        if generic_match:
+            # we know it's a generic match, remove the digit from our 
+            # actual hardware id for future comparisons
+            if actual_hwid[-1].isdigit():
+                actual_hwid = actual_hwid[:-1]
+
+        hardware_match = actual_hwid == hwid
+        if hwid == 'rbp1':
+            # exception to the rule, rbp1 == rbp
+            hardware_match = actual_hwid == hwid[-1]
+
+        if negative_match:
+            return not hardware_match
+
+        return hardware_match
+
     def stage_dialog(self):
         try:
             if self.progress_dialog:
@@ -795,8 +844,7 @@ class Main(object):
             if v.get('active', False):
 
                 for log_entry in v.get('logs', default_entry):
-                    if log_entry.get('hwid', '') == 'rbp' and not hardware_prefix().startswith('rbp'):
-                        # raspberry pi only log on non-rbp
+                    if not self.valid_hardware(log_entry.get('hwid', '')):
                         continue
 
                     self.log_blotter.append(log_entry['key'] + '  :  ' + log_entry['name'] + '\n')
@@ -831,8 +879,7 @@ class Main(object):
     def grab_log(self, ltyp, actn, name, key, hwid=''):
         """ Method grabs the logs from either a file or the command line."""
 
-        if hwid == 'rbp' and not hardware_prefix().startswith(hwid):
-            # raspberry pi only log on non-rbp
+        if not self.valid_hardware(hwid):
             return
 
         self.log_blotter.extend([SECTION_START % (name, key)])
@@ -865,6 +912,18 @@ class Main(object):
         # clean up the blotter
         self.log_blotter = [x.replace('\0', '').replace('\ufeff', '').encode('utf-8')
                             for x in self.log_blotter if hasattr(x, 'replace')]
+
+        if os.path.isfile(TEMP_LOG_FILE):
+            slept = 0
+            sleep_inc = 0.5
+            with os.popen('sudo rm %s' % TEMP_LOG_FILE) as _:
+                pass
+
+            while slept <= 3:
+                if not os.path.isfile(TEMP_LOG_FILE):
+                    break
+                time.sleep(sleep_inc)
+                slept += sleep_inc
 
         try:
             with open(TEMP_LOG_FILE, 'wb') as f:
@@ -922,12 +981,20 @@ class Main(object):
                     with os.popen('%s "%s" %s/documents' %
                                   (attempt, TEMP_LOG_FILE, UPLOAD_LOC)) as open_file:
 
-                        line = open_file.readline()
+                        response = open_file.read()
 
-                        key = line.replace('{"key":"', '').replace('"}', '').replace('\n', '')
+                    key = None
+                    try:
+                        payload = json.loads(response)
+                        if 'key' in payload:
+                            key = payload['key']
+                    except:
+                        match = re.search(r'"key":"(?P<key>[^"]+?)"', response)
+                        if match:
+                            key = match.group('key')
 
-                        if xbmc:
-                            log('pastio line: %s' % repr(line))
+                    if xbmc:
+                        log('pastio response: %s' % repr(response))
 
                     self.progress_dialog.update(percent=pct, message=lang(32010))
 
@@ -983,25 +1050,6 @@ class Main(object):
                     log("Logs successfully uploaded.")
                     log("Logs available at %s" % self.url.replace(' ', ''))
 
-
-def hardware_prefix():
-    """ Returns the prefix for the hardware type. rbp, rbp2, etc """
-    global HARDWARE_PREFIX
-
-    if HARDWARE_PREFIX:
-        return HARDWARE_PREFIX
-
-    with open('/proc/cmdline', 'r', encoding='utf-8') as f:
-        line = f.readline()
-
-    settings = line.split(' ')
-
-    for setting in settings:
-        if setting.startswith('osmcdev='):
-            HARDWARE_PREFIX = setting[len('osmcdev='):]
-            break
-
-    return HARDWARE_PREFIX
 
 
 if __name__ == "__main__":

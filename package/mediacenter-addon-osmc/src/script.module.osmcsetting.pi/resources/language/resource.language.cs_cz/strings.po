@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-08-03 08:17+0000\n"
+"PO-Revision-Date: 2021-08-22 15:19+0000\n"
 "Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
 "Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-pisettings/cs_cz/>\n"
 "Language: cs_cz\n"
@@ -23,23 +23,23 @@ msgstr "GPU paměť a kodeky"
 
 msgctxt "#32003"
 msgid "display_rotate"
-msgstr "př. display_rotate"
+msgstr ""
 
 msgctxt "#32004"
 msgid "0"
-msgstr "0°"
+msgstr ""
 
 msgctxt "#32005"
 msgid "90"
-msgstr "90°"
+msgstr ""
 
 msgctxt "#32006"
 msgid "180"
-msgstr "180°"
+msgstr ""
 
 msgctxt "#32006"
 msgid "270"
-msgstr "270°"
+msgstr ""
 
 msgctxt "#32007"
 msgid "Flip Horizontal"
@@ -51,19 +51,19 @@ msgstr "Převrátit svisle"
 
 msgctxt "#32009"
 msgid "hdmi_safe"
-msgstr "př. hdmi_safe"
+msgstr ""
 
 msgctxt "#32010"
 msgid "hdmi_force_hotplug=1, hdmi_ignore_edid=0xa5000080, config_hdmi_boost=4, hdmi_group=2, hdmi_mode=4, disable_overscan=0"
-msgstr "hdmi_force_hotplug=1, hdmi_ignore_edid=0xa5000080, config_hdmi_boost=4, hdmi_group=2, hdmi_mode=4, disable_overscan=0"
+msgstr ""
 
 msgctxt "#32011"
 msgid "hdmi_ignore_edid"
-msgstr "př. hdmi_ignore_edid"
+msgstr ""
 
 msgctxt "#32012"
 msgid "store_hdmi_to_file"
-msgstr "př. store_hdmi_to_file"
+msgstr ""
 
 msgctxt "#32013"
 msgid "hdmi_force_hotplug should be disabled before using a different tv or hdmi port"
@@ -71,7 +71,7 @@ msgstr "př. hdmi_force_hotplug by měl být deaktivován před použitím jiné
 
 msgctxt "#32014"
 msgid "hdmi_ignore_cec"
-msgstr "př. hdmi_ignore_cec"
+msgstr ""
 
 msgctxt "#32015"
 msgid "config_hdmi_boost (0 to disable)"
@@ -79,7 +79,7 @@ msgstr "př. config_hdmi_boost (0 pro vypnutí)"
 
 msgctxt "#32016"
 msgid "hdmi_group"
-msgstr "př. hdmi_group"
+msgstr ""
 
 msgctxt "#32017"
 msgid "Auto"
@@ -87,11 +87,11 @@ msgstr "Automaticky"
 
 msgctxt "#32018"
 msgid "CEA"
-msgstr "CEA"
+msgstr ""
 
 msgctxt "#32019"
 msgid "DMT"
-msgstr "DMT"
+msgstr ""
 
 msgctxt "#32020"
 msgid "hdmi_mode (max 59 for CEA)"
@@ -99,11 +99,11 @@ msgstr "př. hdmi_mode (max 59 pro CEA)"
 
 msgctxt "#32021"
 msgid "sdtv_mode"
-msgstr "př. sdtv_mode"
+msgstr ""
 
 msgctxt "#32022"
 msgid "NTSC"
-msgstr "norma NTSC"
+msgstr ""
 
 msgctxt "#32023"
 msgid "NTSC (Japan)"
@@ -111,7 +111,7 @@ msgstr "norma NTSC (Japonsko)"
 
 msgctxt "#32024"
 msgid "PAL"
-msgstr "norma PAL"
+msgstr ""
 
 msgctxt "#32025"
 msgid "Pal(Brazil)"
@@ -119,19 +119,19 @@ msgstr "norma PAL (Brazílie)"
 
 msgctxt "#32026"
 msgid "sdtv_aspect"
-msgstr "př. sdtv_aspect"
+msgstr ""
 
 msgctxt "#32027"
 msgid "4:3"
-msgstr "4:3"
+msgstr ""
 
 msgctxt "#32028"
 msgid "14:9"
-msgstr "14:9"
+msgstr ""
 
 msgctxt "#32029"
 msgid "16:9"
-msgstr "16:9"
+msgstr ""
 
 msgctxt "#32030"
 msgid "Set for 256mb Pi"
@@ -283,7 +283,7 @@ msgstr "Povolit podporu SPI"
 
 msgctxt "#32087"
 msgid "hdmi_pixel_encoding"
-msgstr "př. hdmi_pixel_encoding"
+msgstr ""
 
 msgctxt "#32088"
 msgid "default"
@@ -307,7 +307,7 @@ msgstr "Plné YCbCr"
 
 msgctxt "#32093"
 msgid "dac_plus"
-msgstr "dac_plus"
+msgstr ""
 
 msgctxt "#32094"
 msgid "Soundcard Overlay"
@@ -331,11 +331,11 @@ msgstr "(Výchozí: 2 pro Pi A & B, 5 pro pozdější verze)"
 
 msgctxt "#32099"
 msgid "hdmi_edid_file"
-msgstr "př. hdmi_edid_file"
+msgstr ""
 
 msgctxt "#32100"
 msgid "hdmi_force_hotplug"
-msgstr "př. hdmi_force_hotplug"
+msgstr ""
 
 msgctxt "#32101"
 msgid "Enable Justboom DAC sound card"

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-08-02 09:01+0000\n"
+"PO-Revision-Date: 2021-08-22 15:20+0000\n"
 "Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
 "Language-Team: Czech <http://translate.osmc.tv/projects/osmc/my-osmc-updates/cs_cz/>\n"
 "Language: cs_cz\n"
@@ -443,7 +443,7 @@ msgstr "[COLOR red]Varování: Toto vymaže VŠECHNA uživatelská data v Kodi; 
 
 msgctxt "#32136"
 msgid "OSMC"
-msgstr "OSMC"
+msgstr ""
 
 msgctxt "#32137"
 msgid "Update not permitted."
@@ -559,7 +559,7 @@ msgstr "Vyberte nový adresář pro obnovení"
 
 msgctxt "#32165"
 msgid "Browse to restore location"
-msgstr "Vyhledejte úložiště se zálohou"
+msgstr "Vyhledejte úložiště kam bude záloha obnovena"
 
 msgctxt "#32166"
 msgid "Addons Folder"
@@ -603,7 +603,7 @@ msgstr "Adresář TVheadendu"
 
 msgctxt "#32177"
 msgid "Autofs"
-msgstr "Autofs"
+msgstr ""
 
 msgctxt "#32178"
 msgid "Authorized SSH Keys"
@@ -631,7 +631,7 @@ msgstr "Knihovna"
 
 msgctxt "#32184"
 msgid "Playlists"
-msgstr "Seznam pro přehrátí"
+msgstr "Seznamy pro přehrátí"
 
 msgctxt "#32185"
 msgid "Profiles"
@@ -647,7 +647,7 @@ msgstr "Uložené stavy her"
 
 msgctxt "#32188"
 msgid "Tvheadend"
-msgstr "TVheadend"
+msgstr ""
 
 msgctxt "#32189"
 msgid "Directory "

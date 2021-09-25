@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-08-22 15:20+0000\n"
+"PO-Revision-Date: 2021-09-13 12:56+0000\n"
 "Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
 "Language-Team: Norwegian Bokmål <http://translate.osmc.tv/projects/osmc/my-osmc-updates/nb_NO/>\n"
 "Language: nb_NO\n"
@@ -11,7 +11,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.7\n"
+"X-Generator: Weblate 4.8\n"
 
 msgctxt "#32001"
 msgid "Schedule"
@@ -158,8 +158,8 @@ msgid "Action when updates are found"
 msgstr "Handling når oppdateringer er tilgjengelig"
 
 msgctxt "#32065"
-msgid "Only show prompts on the Home screen"
-msgstr "Vis bare varsler på hjemskjerm"
+msgid "Only show prompts on the home screen"
+msgstr ""
 
 msgctxt "#32066"
 msgid "Icon Position Horizontal (% of screen)"
@@ -285,6 +285,7 @@ msgctxt "#32096"
 msgid "Backup"
 msgstr "Sikkerhetskopi"
 
+#, fuzzy
 msgctxt "#32097"
 msgid "Backup error. Details in log."
 msgstr "Sikkerhetskopi feilet. Detaljer kan sees i logg"
@@ -329,6 +330,7 @@ msgctxt "#32107"
 msgid "Backup before each update (excludes manual update)."
 msgstr "Lag en sikkerhetskopi før hver oppdatering (utelukker manuelle oppdateringer)."
 
+#, fuzzy
 msgctxt "#32108"
 msgid "Number of backup files to keep (0 for keep all)"
 msgstr "Antall sikkerhetskopier å beholde (0 for å beholde alle)."
@@ -433,6 +435,7 @@ msgctxt "#32133"
 msgid "The installed program requires a restart."
 msgstr "Det installerte programmet krever omstart."
 
+#, fuzzy
 msgctxt "#32134"
 msgid "Reset Kodi on next reboot"
 msgstr "Nullstill Kodi ved neste omstart."
@@ -494,8 +497,8 @@ msgid "Location for backup not provided."
 msgstr "Mål for sikkerhetskopi ikke oppgitt."
 
 msgctxt "#32149"
-msgid "Set the backup folder in MyOSMC."
-msgstr "Sett mappe for sikkerhetskopi i MyOSMC."
+msgid "Set the backup folder in My OSMC."
+msgstr ""
 
 msgctxt "#32150"
 msgid "Insufficent diskspace at target location."
@@ -513,10 +516,12 @@ msgctxt "#32153"
 msgid "Backup failed to copy the tar file."
 msgstr "Sikkerhetskopi feilet med å kopiere tar-filen."
 
+#, fuzzy
 msgctxt "#32154"
 msgid "Select a backup file"
 msgstr "Velg en sikkerhetskopifil."
 
+#, fuzzy
 msgctxt "#32155"
 msgid "Browse to backup file"
 msgstr "Bla til sikkerhetskopifil."
@@ -617,6 +622,7 @@ msgctxt "#32180"
 msgid "Addon Data"
 msgstr "Utvidelse-data"
 
+#, fuzzy
 msgctxt "#32181"
 msgid "Database"
 msgstr "Database"
@@ -660,3 +666,11 @@ msgstr "Blandet"
 msgctxt "#32191"
 msgid "File"
 msgstr "Fil"
+
+#~ msgctxt "#32065"
+#~ msgid "Only show prompts on the Home screen"
+#~ msgstr "Vis bare varsler på hjemskjerm"
+
+#~ msgctxt "#32149"
+#~ msgid "Set the backup folder in MyOSMC."
+#~ msgstr "Sett mappe for sikkerhetskopi i MyOSMC."

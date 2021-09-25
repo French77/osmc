@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-08-22 15:20+0000\n"
+"PO-Revision-Date: 2021-09-13 12:56+0000\n"
 "Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
 "Language-Team: Norwegian Bokmål <http://translate.osmc.tv/projects/osmc/my-osmc-service/nb_NO/>\n"
 "Language: nb_NO\n"
@@ -11,12 +11,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.7\n"
+"X-Generator: Weblate 4.8\n"
 
 msgctxt "#32001"
 msgid "OSMC Settings"
 msgstr "OSMC innstillinger"
 
+#, fuzzy
 msgctxt "#32002"
 msgid "OSMC"
 msgstr "OSMC"
@@ -61,6 +62,7 @@ msgctxt "#32014"
 msgid "OSMC could not automatically connect to the Internet."
 msgstr "OSMC kunne ikke automatisk koble til Internett."
 
+#, fuzzy
 msgctxt "#32015"
 msgid "I'd like to set up networking manually"
 msgstr "Jeg ønsker å sette opp nettverket manuelt."
@@ -85,6 +87,7 @@ msgctxt "#32020"
 msgid "We hope you enjoy using OSMC"
 msgstr "Vi håper du nyter bruken av OSMC"
 
+#, fuzzy
 msgctxt "#32021"
 msgid "~ Team OSMC ~"
 msgstr "~ Team OSMC ~"
@@ -145,6 +148,7 @@ msgctxt "#32035"
 msgid "Give your device a name"
 msgstr "Gi enheten din et navn"
 
+#, fuzzy
 msgctxt "#32036"
 msgid "SSH Service is Enabled"
 msgstr "SSH-tjeneste er aktivert."
@@ -193,6 +197,7 @@ msgctxt "#32047"
 msgid "My OSMC"
 msgstr ""
 
+#, fuzzy
 msgctxt "#32048"
 msgid "App Store"
 msgstr "App Store"

@@ -3,15 +3,15 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-08-22 15:20+0000\n"
-"Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
+"PO-Revision-Date: 2021-09-15 11:07+0000\n"
+"Last-Translator: Roelof Schuiling <translator-11@contribute-osmc.com>\n"
 "Language-Team: Dutch <http://translate.osmc.tv/projects/osmc/my-osmc-service/nl_nl/>\n"
 "Language: nl_nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.7\n"
+"X-Generator: Weblate 4.8\n"
 
 msgctxt "#32001"
 msgid "OSMC Settings"
@@ -19,7 +19,7 @@ msgstr "OSMC instellingen"
 
 msgctxt "#32002"
 msgid "OSMC"
-msgstr "OSMC"
+msgstr ""
 
 msgctxt "#32005"
 msgid "Please wait a few seconds and try again."
@@ -31,7 +31,7 @@ msgstr "Als deze fout zich blijft voordoen, probeer dan de OSMC Instellingen Ser
 
 msgctxt "#32007"
 msgid "My OSMC service is unavailable"
-msgstr "Mijn OSMC service is niet beschikbaar"
+msgstr "My OSMC service is niet beschikbaar"
 
 msgctxt "#32008"
 msgid "Welcome"
@@ -87,7 +87,7 @@ msgstr "We hopen dat je OSMC met plezier gebruikt"
 
 msgctxt "#32021"
 msgid "~ Team OSMC ~"
-msgstr "~ Team OSMC ~"
+msgstr ""
 
 msgctxt "#32022"
 msgid "I'd like to stay updated with OSMC news by email"
@@ -195,7 +195,7 @@ msgstr ""
 
 msgctxt "#32048"
 msgid "App Store"
-msgstr "App Store"
+msgstr ""
 
 msgctxt "#32049"
 msgid "This module is where you can grab awesome APFs like..."
@@ -235,7 +235,7 @@ msgstr "In deze module kiest de gebruiker het juiste lirc.conf-bestand voor zijn
 
 msgctxt "#32058"
 msgid "Services"
-msgstr "Services"
+msgstr ""
 
 msgctxt "#32059"
 msgid "Control OSMC services"
@@ -243,7 +243,7 @@ msgstr "Bedien OSMC services"
 
 msgctxt "#32060"
 msgid "Updates"
-msgstr "Updates"
+msgstr ""
 
 msgctxt "#32061"
 msgid "Manage updates"

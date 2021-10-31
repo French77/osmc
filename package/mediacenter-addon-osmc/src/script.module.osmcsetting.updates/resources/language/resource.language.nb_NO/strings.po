@@ -3,15 +3,15 @@ msgstr ""
 "Project-Id-Version: My OSMC\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-09-13 12:56+0000\n"
-"Last-Translator: Julian Michel <translator-2@osmc.tv>\n"
+"PO-Revision-Date: 2021-10-20 09:52+0000\n"
+"Last-Translator: Julian Michel <admin.weblate@contribute-osmc.com>\n"
 "Language-Team: Norwegian Bokmål <http://translate.osmc.tv/projects/osmc/my-osmc-updates/nb_NO/>\n"
 "Language: nb_NO\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.8\n"
+"X-Generator: Weblate 4.9-dev\n"
 
 msgctxt "#32001"
 msgid "Schedule"
@@ -285,10 +285,9 @@ msgctxt "#32096"
 msgid "Backup"
 msgstr "Sikkerhetskopi"
 
-#, fuzzy
 msgctxt "#32097"
 msgid "Backup error. Details in log."
-msgstr "Sikkerhetskopi feilet. Detaljer kan sees i logg"
+msgstr "Sikkerhetskopi feilet. Detaljer kan sees i logg."
 
 msgctxt "#32098"
 msgid "Items successfully restored."
@@ -330,10 +329,9 @@ msgctxt "#32107"
 msgid "Backup before each update (excludes manual update)."
 msgstr "Lag en sikkerhetskopi før hver oppdatering (utelukker manuelle oppdateringer)."
 
-#, fuzzy
 msgctxt "#32108"
 msgid "Number of backup files to keep (0 for keep all)"
-msgstr "Antall sikkerhetskopier å beholde (0 for å beholde alle)."
+msgstr "Antall sikkerhetskopier å beholde (0 for å beholde alle)"
 
 msgctxt "#32109"
 msgid "Backups"
@@ -435,10 +433,9 @@ msgctxt "#32133"
 msgid "The installed program requires a restart."
 msgstr "Det installerte programmet krever omstart."
 
-#, fuzzy
 msgctxt "#32134"
 msgid "Reset Kodi on next reboot"
-msgstr "Nullstill Kodi ved neste omstart."
+msgstr "Nullstill Kodi ved neste omstart"
 
 msgctxt "#32135"
 msgid "[COLOR red]Warning: This will delete ALL user data in Kodi; skins, addons, databases, settings, etc.[/COLOR]"
@@ -516,15 +513,13 @@ msgctxt "#32153"
 msgid "Backup failed to copy the tar file."
 msgstr "Sikkerhetskopi feilet med å kopiere tar-filen."
 
-#, fuzzy
 msgctxt "#32154"
 msgid "Select a backup file"
-msgstr "Velg en sikkerhetskopifil."
+msgstr "Velg en sikkerhetskopifil"
 
-#, fuzzy
 msgctxt "#32155"
 msgid "Browse to backup file"
-msgstr "Bla til sikkerhetskopifil."
+msgstr "Bla til sikkerhetskopifil"
 
 msgctxt "#32156"
 msgid "Restore failed to copy the file."

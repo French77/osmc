@@ -7,7 +7,7 @@
 
 if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "pc" ] || [ "$1" == "vero3" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/85e05228b447e587291cd84211ea019afd00d794.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/xbmc/xbmc/archive/52c19a0728723d1b568e47042b36105fdc3b7e68.tar.gz" "$(pwd)/src"
 API_VERSION="19"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
@@ -187,7 +187,7 @@ then
 	    # We have some installed, let's find them
 	    headers_version=$(dpkg -l | grep rbp2-headers | grep 5 | awk '{print $2'})
 	else
-	    headers_version=$(apt-cache search rbp2-headers | grep 5 | head -n 1 | awk {'print $1'})
+	    headers_version=$(apt-cache search rbp2-headers | grep 5 | tail -n 1 | awk {'print $1'})
 	    handle_dep "${headers_version}"
 	fi
         COMPFLAGS+="-I/usr/osmc/include/ -I/usr/osmc/include/EGL -I/usr/src/${headers_version}/include -L/usr/osmc/lib -Wl,-rpath=/usr/osmc/lib" && \
@@ -277,7 +277,7 @@ then
         ADDONS_INPUTSTREAM="inputstream.adaptive inputstream.rtmp inputstream.ffmpegdirect"
 	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick"
 	ADDONS_PVR="pvr.argustv pvr.dvblink pvr.dvbviewer pvr.filmon pvr.freebox pvr.hdhomerun pvr.hts pvr.iptvsimple pvr.mediaportal.tvserver pvr.mythtv pvr.nextpvr pvr.njoy pvr.octonet pvr.pctv pvr.sledovanitv.cz pvr.stalker pvr.teleboy pvr.vbox pvr.vdr.vnsi pvr.vuplus pvr.waipu pvr.wmc pvr.zattoo"
-	ADDONS_SCREENSAVERS="screensaver.asteroids screensaver.asterwave screensaver.biogenesis screensaver.cpblobs screensaver.greynetic screensaver.matrixtrails screensaver.pingpong screensaver.pyro screensaver.shadertoy screensavers.rsxs"
+	ADDONS_SCREENSAVERS="screensaver.asteroids screensaver.asterwave screensaver.biogenesis screensaver.cpblobs screensaver.greynetic screensaver.matrixtrails screensaver.pingpong screensaver.pyro screensaver.shadertoy"
 	ADDONS_VFS="vfs.libarchive vfs.rar vfs.sftp"
         ADDONS_VISUALIZATIONS="visualization.fishbmc visualization.goom visualization.matrix visualization.milkdrop visualization.milkdrop2 visualization.pictureit visualization.shadertoy visualization.spectrum visualization.starburst visualization.waveform"
 	ADDONS_GAME="game.libretro game.libretro.2048" # Needs updating from https://github.com/kodi-game/repo-binary-addons

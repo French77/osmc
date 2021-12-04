@@ -24,10 +24,10 @@ fi
 }
 
 . ../common.sh
-test $1 == rbp2 && VERSION="5.10.60" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == rbp464 && VERSION="5.10.60" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == rbp2 && VERSION="5.10.78" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == rbp464 && VERSION="5.10.78" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
 test $1 == pc && VERSION="4.2.3" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == vero364 && VERSION="4.9.113" && REV="53" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == vero364 && VERSION="4.9.113" && REV="56" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
 if [ $1 == "rbp2" ] || [ $1 == "rbp464" ] || [ $1 == "pc" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
@@ -69,6 +69,8 @@ then
 	sed '/Version/d' -i files-image/DEBIAN/control
         sed '/Package/d' -i files-headers/DEBIAN/control
         sed '/Version/d' -i files-headers/DEBIAN/control
+        sed '/Package/d' -i files-headers-sanitised/DEBIAN/control
+        sed '/Version/d' -i files-headers-sanitised/DEBIAN/control
         sed '/Package/d' -i files-debug/DEBIAN/control
         sed '/Version/d' -i files-debug/DEBIAN/control
         sed '/Package/d' -i files-source/DEBIAN/control
@@ -191,7 +193,11 @@ then
 	mkdir -p ../../files-source/lib/modules/${VERSION}-${REV}-osmc
 	ln -s /usr/src/${1}-headers-${VERSION}-${REV}-osmc ../../files-headers/lib/modules/${VERSION}-${REV}-osmc/build
 	ln -s /usr/src/${1}-source-${VERSION}-${REV}-osmc ../../files-source/lib/modules/${VERSION}-${REV}-osmc/source
-	if [ $? != 0 ]; then echo "Building kernel packages failed" && exit 1; fi
+	if [ $? != 0 ]; then echo "Building kernel headers failed" && exit 1; fi
+	# Install sanitised headers in to sanitised headers package
+	mkdir -p ../../files-headers/usr/src/${1}-headers-sanitised-${VERSION}-${REV}-osmc/
+	$BUILD headers_install INSTALL_HDR_PATH=../../files-headers-sanitised/usr/src/${1}-headers-sanitised-${VERSION}-${REV}-osmc/
+	if [ $? != 0 ]; then echo "Building kernel headers-sanitised failed" && exit 1; fi
 	# Make modules directory
 	mkdir -p ../../files-image/lib/modules/${VERSION}-${REV}-osmc/kernel/drivers
 	if [ "$1" == "rbp2" ] || [ "$1" == "rbp464" ]; then mkdir -p ../../files-image/boot/dtb-${VERSION}-${REV}-osmc/overlays; fi
@@ -280,6 +286,8 @@ then
 	echo "Version: ${VERSION}-${REV}-osmc" >> files-image/DEBIAN/control
         echo "Package: ${1}-headers-${VERSION}-${REV}-osmc" >> files-headers/DEBIAN/control
         echo "Version: ${VERSION}-${REV}-osmc" >> files-headers/DEBIAN/control
+        echo "Package: ${1}-headers-sanitised-${VERSION}-${REV}-osmc" >> files-headers-sanitised/DEBIAN/control
+        echo "Version: ${VERSION}-${REV}-osmc" >> files-headers-sanitised/DEBIAN/control
         echo "Package: ${1}-debug-${VERSION}-${REV}-osmc" >> files-debug/DEBIAN/control
         echo "Version: ${VERSION}-${REV}-osmc" >> files-debug/DEBIAN/control
         echo "Package: ${1}-source-${VERSION}-${REV}-osmc" >> files-source/DEBIAN/control
@@ -344,10 +352,12 @@ EOF
 	chmod +x files-image/DEBIAN/pre*
         fix_arch_ctl "files-image/DEBIAN/control"
         fix_arch_ctl "files-headers/DEBIAN/control"
+	fix_arch_ctl "files-headers-sanitised/DEBIAN/control"
         fix_arch_ctl "files-debug/DEBIAN/control"
 	fix_arch_ctl "files-source/DEBIAN/control"
 	dpkg_build files-image ${1}-image-${VERSION}-${REV}-osmc.deb
 	dpkg_build files-headers ${1}-headers-${VERSION}-${REV}-osmc.deb
+        dpkg_build files-headers-sanitised ${1}-headers-sanitised-${VERSION}-${REV}-osmc.deb
 	dpkg_build files-debug ${1}-image-debug-${VERSION}-${REV}-osmc.deb
 	dpkg_build files-source ${1}-source-${VERSION}-${REV}-osmc.deb
 	echo "Package: ${1}-kernel-osmc" >> files/DEBIAN/control

@@ -1,0 +1,66 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: My OSMC\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2021-08-13 12:54+0000\n"
+"Last-Translator: Tor Gunnar Berland <translator-16@osmc.tv>\n"
+"Language-Team: Norwegian Bokmål <http://translate.osmc.tv/projects/osmc/my-osmc-remotes/nb_NO/>\n"
+"Language: nb_NO\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.7\n"
+
+msgctxt "#32001"
+msgid "Apply"
+msgstr "Bruk"
+
+msgctxt "#32002"
+msgid "Remote Selection"
+msgstr "Fjernkontroll valg"
+
+msgctxt "#32003"
+msgid "Browse"
+msgstr "Utforsk"
+
+msgctxt "#32004"
+msgid "Exit"
+msgstr "Avslutt"
+
+msgctxt "#32005"
+msgid "Select .conf file"
+msgstr "Velg .conf fil"
+
+msgctxt "#32006"
+msgid "OSMC Remotes"
+msgstr "OSMC fjernkontroller"
+
+msgctxt "#32007"
+msgid "Please confirm change"
+msgstr "Vennligst bekreft endringer"
+
+msgctxt "#32008"
+msgid "Changes will revert in x seconds"
+msgstr "Endringer vil tilbakestilles om x sekunder"
+
+msgctxt "#32009"
+msgid "Revert"
+msgstr "Tilbakestill"
+
+msgctxt "#32010"
+msgid "Confirm"
+msgstr "Bekreft"
+
+msgctxt "#32011"
+msgid "Implementing change ..."
+msgstr "Implementerer endring ..."
+
+msgctxt "#32012"
+msgid "Disable RC6"
+msgstr ""
+
+msgctxt "#32013"
+msgid "Service failed to restart."
+msgstr "Omstart av tjeneste feilet."

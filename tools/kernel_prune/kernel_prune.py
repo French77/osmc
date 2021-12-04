@@ -13,7 +13,7 @@ import re
 
 def main(args):
     use_web = False
-    repositories = ['stretch', 'stretch-devel']
+    repositories = ['buster', 'buster-devel']
     arches = [ 'i386', 'amd64', 'armhf', 'arm64']
     kernel_regex = re.compile('(vero364|pc|vero2|vero|rbp1|rbp2|atv)-image-(\d).\d{1,3}.\d{1,3}-\d{1,3}-osmc')
     parser = argparse.ArgumentParser(description="Kernel pruner 0.1")
@@ -52,12 +52,14 @@ def main(args):
 
         			if line.startswith('Depends:'):
         				package_depends = str(line.split('Depends:',1)[1].lstrip())
+        				package_depends_list = [x.strip() for x in package_depends.split(',')]
 
         			if line.startswith('Architecture:'):
         				package_architecture = str(line.split('Architecture:',1)[1].lstrip())
                 # Find the active kernel
                 if package_name.endswith('-kernel-osmc') and package_depends:
                     active_kernel = package_name.split('-kernel-osmc')[0]
+                    package_depends = [ s for s in package_depends_list if "-image-" in s ][0]
                     print(package_depends + " is an active kernel")
                     active_kernels.append(package_depends)
                 # Find all other kernels
@@ -67,13 +69,18 @@ def main(args):
             for kernel in set.difference(set(all_kernels), set(active_kernels)):
                 if args.dry_run == True:
                     print ("We should remove " + kernel + " from " + arch + " in " + repository)
-                    print kernel.replace("image", "headers")
+                    print ("We should remove " + kernel.replace("image", "headers") + " from " + arch + " in " + repository)
+                    print ("We should remove " + kernel.replace("image", "source") + " from " + arch + " in " + repository)
+                    print ("We should remove " + kernel.replace("image", "headers-sanitised") + " from " + arch + " in " + repository)
+                    print ("We should remove " + kernel.replace("image", "debug") + " from " + arch + " in " + repository)
                 else:
                     print ("Removing " + kernel + " from " + arch + " in " + repository)
                     os.chdir("/var/repos/apt/debian")
                     os.system("/usr/bin/reprepro remove " + repository + " " + kernel)
                     os.system("/usr/bin/reprepro remove " + repository + " " + kernel.replace("image", "headers"))
                     os.system("/usr/bin/reprepro remove " + repository + " " + kernel.replace("image", "source"))
+                    os.system("/usr/bin/reprepro remove " + repository + " " + kernel.replace("image", "headers-sanitised"))
+                    os.system("/usr/bin/reprepro remove " + repository + " " + kernel.replace("image", "debug"))
     return 0
 
 if __name__ == '__main__':

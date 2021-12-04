@@ -7,7 +7,7 @@
 
 if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "pc" ] || [ "$1" == "vero3" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/52c19a0728723d1b568e47042b36105fdc3b7e68.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/xbmc/xbmc/archive/49a04cd6a7f49ea9a0f05c492b11a3ba7c542a99.tar.gz" "$(pwd)/src"
 API_VERSION="19"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
@@ -105,6 +105,7 @@ then
         handle_dep "libnfs-dev"
         handle_dep "libass-dev"
 	handle_dep "libunistring-dev"
+	handle_dep "xmlstarlet"
 	if [ "$1" == "rbp2" ]
 	then
 		handle_dep "rbp2-libcec-dev-osmc"
@@ -180,14 +181,14 @@ then
 		COMPFLAGS="-march=armv7-a -mfloat-abi=hard -O3 -marm -mfpu=neon -fomit-frame-pointer "
 	fi
 	if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]; then
-	# Check if we have headers
-	dpkg -l | grep rbp2-headers | grep 5
+	# Check if we have headers for kernel 5.x
+	dpkg -l | grep rbp2-headers-sanitised | grep 5
 	if [ $? -eq 0 ]
 	then
 	    # We have some installed, let's find them
-	    headers_version=$(dpkg -l | grep rbp2-headers | grep 5 | awk '{print $2'})
+	    headers_version=$(dpkg -l | grep rbp2-headers-sanitised | grep 5 | awk '{print $2'})
 	else
-	    headers_version=$(apt-cache search rbp2-headers | grep 5 | tail -n 1 | awk {'print $1'})
+	    headers_version=$(apt-cache search rbp2-headers-sanitised | grep 5 | tail -n 1 | awk {'print $1'})
 	    handle_dep "${headers_version}"
 	fi
         COMPFLAGS+="-I/usr/osmc/include/ -I/usr/osmc/include/EGL -I/usr/src/${headers_version}/include -L/usr/osmc/lib -Wl,-rpath=/usr/osmc/lib" && \
@@ -272,7 +273,7 @@ then
 	mkdir build
 	cd build
 	# One day we might need to change this in to ADDONS_XYZ_PLAT
-        ADDONS_AUDIO_DECODERS="audiodecoder.2sf audiodecoder.asap audiodecoder.dumb audiodecoder.fluidsynth audiodecoder.gme audiodecoder.gsf audiodecoder.modplug audiodecoder.ncsf audiodecoder.nosefart audiodecoder.openmpt audiodecoder.organya audiodecoder.qsf audiodecoder.sacd audiodecoder.sidplay audiodecoder.snesapu audiodecoder.ssf audiodecoder.stsound audiodecoder.timidity audiodecoder.upse audiodecoder.vgmstream audiodecoder.wsr"
+        ADDONS_AUDIO_DECODERS="audiodecoder.2sf audiodecoder.asap audiodecoder.dumb audiodecoder.gme audiodecoder.gsf audiodecoder.modplug audiodecoder.ncsf audiodecoder.nosefart audiodecoder.openmpt audiodecoder.organya audiodecoder.qsf audiodecoder.sacd audiodecoder.sidplay audiodecoder.snesapu audiodecoder.ssf audiodecoder.stsound audiodecoder.timidity audiodecoder.upse audiodecoder.vgmstream audiodecoder.wsr audiodecoder.hvl"
         ADDONS_AUDIO_ENCODERS="audioencoder.flac audioencoder.lame audioencoder.vorbis audioencoder.wav"
         ADDONS_INPUTSTREAM="inputstream.adaptive inputstream.rtmp inputstream.ffmpegdirect"
 	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick"
@@ -338,8 +339,11 @@ then
 	    rm ${language_file}
         done
         cp -ar resource.language.* ${out}/usr/share/kodi/addons
+	# Prevent language updates
+	for language in ${out}/usr/share/kodi/addons/resource.language.*; do xmlstarlet edit --inplace --update '/addon/@version' -v "999.999.999" $language/addon.xml; done
 	popd
 	popd
+	cp -ar patches/resource.language.*/ ${out}/usr/share/kodi/addons/
 	rm -rf ${out}/usr/share/kodi/addons/service.*.versioncheck
 	mkdir -p files-debug/usr/lib/kodi
 	cp -ar ${out}/usr/lib/kodi/kodi.bin files-debug/usr/lib/kodi/kodi.bin

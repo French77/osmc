@@ -9,7 +9,7 @@ echo -e "Building package rbp-bootloader-osmc"
 
 BOOT="files/boot"
 FWFILES=( "LICENCE.broadcom" "start_x.elf" "fixup_x.dat" "bootcode.bin" "start4x.elf" "fixup4x.dat" )
-REV="0591568b29a724de406aa737fc8e13f68c423f3f"
+REV="12bc6e3677348adaffd155e7a04761e2661d4bff"
 
 make clean
 
@@ -36,6 +36,11 @@ disable_overscan=1
 start_x=1
 disable_splash=1
 disable_fw_kms_setup=1
-include config-user.txt" > $BOOT/config.txt
+hdmi_ignore_cec_init=1
+include config-user.txt
+
+[pi02]
+dtoverlay=vc4-kms-v3d,cma-256
+" > $BOOT/config.txt
 
 dpkg_build files/ rbp-bootloader-osmc.deb

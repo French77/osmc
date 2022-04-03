@@ -24,10 +24,10 @@ fi
 }
 
 . ../common.sh
-test $1 == rbp2 && VERSION="5.10.78" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == rbp464 && VERSION="5.10.78" && REV="2" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == rbp2 && VERSION="5.10.78" && REV="5" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == rbp464 && VERSION="5.10.78" && REV="5" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
 test $1 == pc && VERSION="4.2.3" && REV="16" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == vero364 && VERSION="4.9.113" && REV="60" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == vero364 && VERSION="4.9.113" && REV="65" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
 if [ $1 == "rbp2" ] || [ $1 == "rbp464" ] || [ $1 == "pc" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
@@ -65,6 +65,7 @@ then
 	make clean
 	sed '/Package/d' -i files/DEBIAN/control
 	sed '/Depends/d' -i files/DEBIAN/control
+	sed '/Provides/d' -i files/DEBIAN/control
 	sed '/Package/d' -i files-image/DEBIAN/control
 	sed '/Version/d' -i files-image/DEBIAN/control
         sed '/Package/d' -i files-headers/DEBIAN/control
@@ -367,6 +368,14 @@ EOF
 	else
 		echo "Depends: ${1}-image-${VERSION}-${REV}-osmc" >> files/DEBIAN/control
 	fi
+	case "$1" in
+		rbp464|vero364)
+			echo "Provides: wireguard-modules:armhf (= 2.0.0)" >> files/DEBIAN/control
+			;;
+		*)
+			echo "Provides: wireguard-modules (= 2.0.0)" >> files/DEBIAN/control
+			;;
+	esac
 	fix_arch_ctl "files/DEBIAN/control"
 	dpkg_build files/ ${1}-kernel-${VERSION}-${REV}-osmc.deb
 	build_return=$?

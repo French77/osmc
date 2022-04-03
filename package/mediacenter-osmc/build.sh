@@ -7,7 +7,7 @@
 
 if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "pc" ] || [ "$1" == "vero3" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/49a04cd6a7f49ea9a0f05c492b11a3ba7c542a99.tar.gz" "$(pwd)/src"
+pull_source "https://github.com/xbmc/xbmc/archive/2382f8e725d1865a22b6ef7a24e6b64f078c2e01.tar.gz" "$(pwd)/src"
 API_VERSION="19"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
@@ -106,7 +106,7 @@ then
         handle_dep "libass-dev"
 	handle_dep "libunistring-dev"
 	handle_dep "xmlstarlet"
-	if [ "$1" == "rbp2" ]
+	if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]
 	then
 		handle_dep "rbp2-libcec-dev-osmc"
 		handle_dep "armv7-libshairplay-dev-osmc"
@@ -221,7 +221,7 @@ then
             -DENABLE_SNDIO=OFF \
             -DENABLE_MARIADBCLIENT=ON \
 	    -DENABLE_VAAPI=OFF \
-	    -DENABLE_VDPAU=OFF \
+            -DENABLE_VDPAU=OFF \
         ../
 	fi
         if [ "$1" == "vero3" ]; then
@@ -260,7 +260,7 @@ then
 	    -DENABLE_PULSEAUDIO=OFF \
 	    -DENABLE_LCMS2=OFF \
 	    -DENABLE_SNDIO=OFF \
-	    -DENABLE_MARIADBCLIENT=ON \
+            -DENABLE_MARIADBCLIENT=ON \
 	../
         fi
 	if [ $? != 0 ]; then echo -e "Configure failed!" && exit 1; fi
@@ -315,8 +315,8 @@ then
         cd ../
 	# Update Matrix screensaver logo
 	cp ../../../../patches/logo.png visualization.matrix/visualization.matrix/resources/textures/logo.png || true # Just in case user isn't building binaddons
-	#$BUILD -C build/
-	make -j1 -C build/
+	$BUILD -C build/
+	#make -j1 -C build/
 	if [ $? != 0 ]; then echo "Building binary addons failed" && exit 1; fi
 	popd
         # Languages

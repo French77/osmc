@@ -44,7 +44,7 @@ try:
 
     log = StandardLogger(ADDON_ID, os.path.basename(__file__)).log
     lang = LangRetriever(ADDON).lang
-except (ValueError, ModuleNotFoundError):
+except (ValueError, ModuleNotFoundError, ImportError):
     def lang(value):
         return value
 
@@ -58,6 +58,20 @@ USERDATA = '/home/osmc/.kodi/userdata/'
 TEMP_LOG_FILENAME = 'uploadlog.txt'
 TEMP_LOG_FILE = '/var/tmp/' + TEMP_LOG_FILENAME
 UPLOAD_LOC = 'https://paste.osmc.tv'
+
+RE_MASKS = {
+    '00': re.compile(r'((?:OAuth|Bearer)\s)[^\'"]+'),  # oauth tokens
+    '01': re.compile(r'(["\']client_secret["\']:\s*[\'"])[^\'"]+'),  # client secret
+    '02': re.compile(r'(client_secret=).+?(&|$|\|)'),  # client secret
+    '03': re.compile(r'(["\'](?:nauth)*sig["\']: ["\'])[^\'"]+'),  # signature
+    '04': re.compile(r'(<[pP]ass(?:word)?>)[^<]+(</[pP]ass(?:word)?>)'),  # pass[word]
+    '05': re.compile(r'(["\']password["\']:\s*[\'"])[^\'"]+'),  # password
+    '06': re.compile(r'(password=).+?(&|$|\|)'),  # password
+    '07': re.compile(r'(\w://.+?:).+?(@\w+)'),  # basic authentication
+    '08': re.compile(r'([aA]ccess[_-]*?[tT]oken=).+?(&|$|\|)'),  # access tokens
+    '09': re.compile(r'([xX]-[a-zA-Z]+?-[tT]oken=).+?(&|$|\|)'),  # access tokens (plex/emby)
+    '10': re.compile(r'(<setting\s[^>]*password[^>]+>)[^<]+'),  # settings v2.0 values with password
+}
 
 SETS = {
     'uname': {
@@ -121,7 +135,7 @@ SETS = {
     },
 
     'guisettings_ab': {
-        'order': 2.25,
+        'order': 3,
         'active': False,
         'help': 'GUI Settings (abridged)',
         'dest': 'guisettings_ab',
@@ -132,13 +146,13 @@ SETS = {
                 'name': 'GUI Settings (abridged)',
                 'key': 'z9Z12KgS',
                 'ltyp': 'cl_log',
-                'actn': '/usr/bin/readgui'
+                'actn': '/usr/bin/readgui',
             },
         ],
     },
 
     'guisettings': {
-        'order': 2.5,
+        'order': 4,
         'active': False,
         'help': 'guisettings.xml',
         'dest': 'guisettings',
@@ -150,13 +164,14 @@ SETS = {
                 'key': 'zm2LhjK1',
                 'ltyp': 'file_log',
                 'actn': USERDATA + 'guisettings.xml',
+                'mask': True
             },
         ],
 
     },
 
     'advancedsettings': {
-        'order': 3,
+        'order': 5,
         'active': False,
         'help': 'advancedsettings.xml',
         'dest': 'advancedsettings',
@@ -168,40 +183,7 @@ SETS = {
                 'key': 'C7hKmH1p',
                 'ltyp': 'file_log',
                 'actn': USERDATA + 'advancedsettings.xml',
-            },
-        ],
-    },
-
-    'keyboard': {
-        'order': 4,
-        'active': False,
-        'help': 'keyboard.xml',
-        'dest': 'keyboard',
-        'action': 'store_true',
-        'flags': ['-k', '--keyboard'],
-        'logs': [
-            {
-                'name': 'keyboard.xml',
-                'key': 'MBom5YV6',
-                'ltyp': 'file_log',
-                'actn': USERDATA + 'keyboard.xml',
-            },
-        ],
-    },
-
-    'remote': {
-        'order': 5,
-        'active': False,
-        'help': 'remote.xml',
-        'dest': 'remote',
-        'action': 'store_true',
-        'flags': ['-r', '--remote'],
-        'logs': [
-            {
-                'name': 'remote.xml',
-                'key': '5jmphjm3',
-                'ltyp': 'file_log',
-                'actn': USERDATA + 'remote.xml',
+                'mask': True
             },
         ],
     },
@@ -219,6 +201,7 @@ SETS = {
                 'key': 'SGkuGLGj',
                 'ltyp': 'file_log',
                 'actn': USERDATA + 'sources.xml',
+                'mask': True
             },
         ],
     },
@@ -236,6 +219,7 @@ SETS = {
                 'key': 'qiE9Dtax',
                 'ltyp': 'file_log',
                 'actn': '/etc/fstab',
+                'mask': True
             },
             {
                 'name': 'mounts',
@@ -339,7 +323,7 @@ SETS = {
                 'name': 'System Journal',
                 'key': 'MyqVXi2x',
                 'ltyp': 'cl_log',
-                'actn': 'sudo journalctl',
+                'actn': 'sudo journalctl -n 30000 --since "1 days ago"',
             },
         ],
     },
@@ -534,20 +518,6 @@ SETS = {
                 'actn': '/usr/bin/edid-decode /sys/class/drm/card0-HDMI-A-1/edid',
                 'hwid': 'rbp',
             },
-            {
-                'name': 'MPG2 codec_enabled',
-                'key': 'DjfSD1Fa',
-                'ltyp': 'cl_log',
-                'actn': 'vcgencmd codec_enabled MPG2',
-                'hwid': 'rbp',
-            },
-            {
-                'name': 'WVC1 codec_enabled',
-                'key': 'dDR3l5zx',
-                'ltyp': 'cl_log',
-                'actn': 'vcgencmd codec_enabled WVC1',
-                'hwid': 'rbp',
-            },
         ],
     },
 
@@ -581,12 +551,14 @@ SETS = {
                 'key': 'HyhIT4UP',
                 'ltyp': 'file_log',
                 'actn': '/home/osmc/.kodi/temp/kodi.log',
+                'mask': True
             },
             {
                 'name': 'Kodi Old Log',
                 'key': '2qaAc90c',
                 'ltyp': 'file_log',
                 'actn': '/home/osmc/.kodi/temp/kodi.old.log',
+                'mask': True
             },
         ],
     },
@@ -806,7 +778,7 @@ class Main(object):
             hwid = hwid.lstrip('!')
 
         if generic_match:
-            # we know it's a generic match, remove the digit from our 
+            # we know it's a generic match, remove the digit from our
             # actual hardware id for future comparisons
             if actual_hwid[-1].isdigit():
                 actual_hwid = actual_hwid[:-1]
@@ -897,25 +869,56 @@ class Main(object):
         self.progress_dialog.update(percent=100, message=lang(32005))
         self.progress_dialog.close()
 
-    def grab_log(self, ltyp, actn, name, key, hwid=''):
+    def grab_log(self, ltyp, actn, name, key, hwid='', mask=False):
         """ Method grabs the logs from either a file or the command line."""
 
         if not self.valid_hardware(hwid):
             return
 
         self.log_blotter.extend([SECTION_START % (name, key)])
-
+        print('Grabbing log {name} ...'.format(name=name))
         try:
             if ltyp == 'file_log':
                 with open(actn, 'r', encoding='utf-8') as f:
-                    self.log_blotter.extend(f.readlines())
+                    readlines = f.readlines()
+                    if mask:
+                        readlines = self._mask_sensitive(readlines)
+                    self.log_blotter.extend(readlines)
             else:
                 with CommandLineInterface(actn) as f:
-                    self.log_blotter.extend(f.readlines())
+                    readlines = f.readlines()
+                    if mask:
+                        readlines = self._mask_sensitive(readlines)
+                    self.log_blotter.extend(readlines)
         except:
-            self.log_blotter.extend(['%s error' % name])
+            print('An error occurred while grabbing %s:\n %s' % (name, traceback.format_exc().splitlines()[-1]))
+            self.log_blotter.extend(['An error occurred while grabbing %s:\n %s' % (name, traceback.format_exc().splitlines()[-1])])
 
         self.log_blotter.extend([SECTION_END % (name, key)])
+
+    @staticmethod
+    def _mask_sensitive(lines_to_mask):
+        # mask potentially sensitive information in blotter
+        print('Masking private information ...')
+
+        def _mask(message):
+            mask = '**masked*by*grab-logs**'
+
+            masked_message = RE_MASKS['00'].sub(r'\1' + mask, message)
+            masked_message = RE_MASKS['01'].sub(r'\1' + mask, masked_message)
+            masked_message = RE_MASKS['02'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['03'].sub(r'\1' + mask, masked_message)
+            masked_message = RE_MASKS['04'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['05'].sub(r'\1' + mask, masked_message)
+            masked_message = RE_MASKS['06'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['07'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['08'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['09'].sub(r'\1' + mask + r'\2', masked_message)
+            masked_message = RE_MASKS['10'].sub(r'\1' + mask, masked_message)
+
+            return masked_message
+
+        return [_mask(line) for line in lines_to_mask]
 
     def write_to_screen(self):
         self.write_to_temp_file()
@@ -931,6 +934,7 @@ class Main(object):
     def write_to_temp_file(self):
         """ Writes the logs to a single temporary file """
         # clean up the blotter
+        print('Writing logs to temp file ...')
         self.log_blotter = [x.replace('\0', '').replace('\ufeff', '').encode('utf-8')
                             for x in self.log_blotter if hasattr(x, 'replace')]
 
@@ -962,6 +966,7 @@ class Main(object):
 
     def dispatch_logs(self):
         """ Either copies the combined logs to the SD Card or Uploads them to the pastebin. """
+        print('Dispatching logs ...')
         self.stage_dialog()
 
         if self.copy_to_boot:
@@ -1070,7 +1075,6 @@ class Main(object):
 
                     log("Logs successfully uploaded.")
                     log("Logs available at %s" % self.url.replace(' ', ''))
-
 
 
 if __name__ == "__main__":

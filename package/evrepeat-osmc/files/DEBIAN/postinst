@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ "$1" = "configure" ]; then
+	/bin/udevadm control --reload-rules
+	/bin/udevadm trigger
+	exit 0
+fi

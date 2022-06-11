@@ -27,7 +27,7 @@ done
 # Configure the target directory
 ARCH="armhf"
 DIR="$filestub/"
-RLS="buster"
+RLS="bullseye"
 
 # Remove existing build
 remove_existing_filesystem "{$wd}/{$DIR}"
@@ -54,7 +54,7 @@ echo "deb http://deb.debian.org/debian $RLS main contrib non-free
 
 deb http://deb.debian.org/debian/ $RLS-updates main contrib non-free
 
-deb http://security.debian.org/ $RLS/updates main contrib non-free
+deb http://security.debian.org/ $RLS-security main contrib non-free
 
 deb http://apt.osmc.tv $RLS main
 " > ${DIR}/etc/apt/sources.list
@@ -77,6 +77,9 @@ chroot ${DIR} apt-get -y install --no-install-recommends rbp4-device-osmc
 verify_action
 # We have SSH separate so we can remove it later via App Store
 chroot ${DIR} apt-get -y install --no-install-recommends ssh-app-osmc
+verify_action
+# Ensure we have usr directory symlinks even if we use old debootstrap
+chroot ${DIR} apt-get -y install --no-install-recommends usrmerge
 verify_action
 echo -e "Configuring environment"
 echo -e "	* Adding user osmc"

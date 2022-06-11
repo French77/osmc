@@ -9,6 +9,7 @@
 """
 
 import os
+import re
 import socket
 import subprocess
 import threading
@@ -254,6 +255,11 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
         self.hotspot_ssid = None
         self.hotspot_passphrase = None
 
+        # CRDA
+        self._crda_file = '/etc/default/crda'
+        self.kodi_region = None
+        self.default_crda_region = None
+
     @property
     def addon(self):
         if not self._addon:
@@ -349,6 +355,8 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
             self.setup_networking_from_preseed()
 
         self.getControl(MYSQL_PANEL).setVisible(False)
+
+        self.set_crda_region_code()
 
     def setup_networking_from_preseed(self):
 
@@ -1113,7 +1121,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
     @staticmethod
     def is_thread_running(thread_name):
         for t in threading.enumerate():
-            if t.getName() == thread_name:
+            if t.name == thread_name:
                 return True
         return False
 
@@ -1125,7 +1133,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                     self.wifi_populate_bot = WIFIPopulateBot(scan, self.getControl(5000),
                                                              self.conn_ssid)
 
-                    self.wifi_populate_bot.setDaemon(True)
+                    self.wifi_populate_bot.daemon = True
                     self.wifi_populate_bot.start()
 
                 self.current_network_config = osmc_network.get_connected_wifi()
@@ -1295,7 +1303,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 osmc_network.wifi_disconnect(path)
 
                 if selection == 2:  # we also want to remove/forget this network
-                    osmc_network.wifi_remove(path)
+                    osmc_network.wifi_remove(path, ssid)
 
                 self.WFP.removeItem(self.WFP.getSelectedPosition())
                 self.toggle_controls(False, [SELECTOR_TETHERING])
@@ -1340,7 +1348,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                     if selection == 1:
                         self.show_busy_dialogue()
-                        osmc_network.wifi_remove(path)
+                        osmc_network.wifi_remove(path, ssid)
                         self.clear_busy_dialogue()
 
             if connect or hiddenssid:
@@ -1348,8 +1356,9 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                 hiddenssid = hiddenssid or ssid
                 # try without a password see if connman has the password
-                connection_status = osmc_network.wifi_connect(path, None,
-                                                              hiddenssid, self.lib_path)
+                wifi_data = wifi.copy()
+                wifi_data['SSID'] = hiddenssid
+                connection_status = osmc_network.wifi_connect(wifi_data, self.lib_path)
 
                 self.clear_busy_dialogue()
 
@@ -1361,10 +1370,10 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                     if password:
                         self.wireless_password = password
+                        wifi_data['Passphrase'] = password
                         self.show_busy_dialogue()
 
-                        connection_status = osmc_network.wifi_connect(path, password,
-                                                                      hiddenssid, self.lib_path)
+                        connection_status = osmc_network.wifi_connect(wifi_data, self.lib_path)
                         self.clear_busy_dialogue()
 
                 if not connection_status:
@@ -1452,7 +1461,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
             self.bluetooth_population_thread = \
                 BluetoothPopulationThread(self.BTD, self.BTP, self.addon)
 
-            self.bluetooth_population_thread.setDaemon(True)
+            self.bluetooth_population_thread.daemon = True
             self.bluetooth_population_thread.start()
 
     def handle_bluetooth_selection(self, control_id):
@@ -1736,6 +1745,70 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
             self.toggle_controls(False, [TETHERING_DISABLE])
 
+    def _get_kodi_region_code(self):
+        language = xbmc.getLanguage(xbmc.ISO_639_1, region=True)
+        region = 'US'
+        if '-' in language:
+            region = language.split('-', maxsplit=1)[1]
+
+        log('Found Kodi region code: %s' % region)
+        self.kodi_region = region
+
+    def _get_crda_region_code(self):
+        if not os.path.isfile(self._crda_file):
+            log('No CRDA file found.')
+            self.default_crda_region = None
+
+        with open(self._crda_file, 'r', encoding='utf-8') as file_handle:
+            crda = file_handle.read()
+
+        match = re.search(r'^REGDOMAIN=(?P<region_code>[A-Z]{2,3})*\s*$', crda)
+        if match:
+            region = match.group('region_code')
+            if region:
+                log('Found CRDA region code: %s' % region)
+            else:
+                log('CRDA region is unconfigured.')
+            self.default_crda_region = region
+            return
+
+        log('REGDOMAIN not found in CRDA file.')
+
+    def _set_crda_region_code(self):
+        if not os.path.isfile(self._crda_file):
+            log('No CRDA file found.')
+            self.default_crda_region = None
+
+        if self.default_crda_region == self.kodi_region or not self.kodi_region:
+            log('CRDA and Kodi region matches or is None.')
+            return
+
+        with open(self._crda_file, 'r', encoding='utf-8') as file_handle:
+            crda = file_handle.read()
+
+        region = '' if not self.default_crda_region else self.default_crda_region
+        payload = crda.replace(
+            'REGDOMAIN=%s' % region,
+            'REGDOMAIN=%s' % self.kodi_region
+        )
+
+        if payload == crda:
+            log('No modifications made to CRDA file.')
+            return
+
+        with open(self._crda_file, 'w', encoding='utf-8') as file_handle:
+            file_handle.write(payload)
+
+        log('CRDA region code was updated from %s to %s.' %
+            (self.default_crda_region, self.kodi_region))
+        self.default_crda_region = self.kodi_region
+
+    def set_crda_region_code(self):
+        log('Configuring CRDA')
+        self._get_kodi_region_code()
+        self._get_crda_region_code()
+        self._set_crda_region_code()
+
 
 class BluetoothPopulationThread(threading.Thread):
 
@@ -1901,7 +1974,7 @@ class WIFIPopulateBot(threading.Thread):
 
         if self.scan:
             self.wifi_scanner_bot = WIFIScannerBot()
-            self.wifi_scanner_bot.setDaemon(True)
+            self.wifi_scanner_bot.daemon = True
             self.wifi_scanner_bot.start()
 
     def run(self):
@@ -1922,7 +1995,7 @@ class WIFIPopulateBot(threading.Thread):
             # every minute re-scan wifi unless the thread has been asked to exit
             if not self.exit and runs % 600 == 0:
                 self.wifi_scanner_bot = WIFIScannerBot()
-                self.wifi_scanner_bot.setDaemon(True)
+                self.wifi_scanner_bot.daemon = True
                 self.wifi_scanner_bot.start()
 
             xbmc.sleep(10)

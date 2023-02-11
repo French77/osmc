@@ -2429,10 +2429,10 @@ index 708678cb59..099b610758 100644
  };
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
 new file mode 100644
-index 0000000000..abc656e6fd
+index 0000000000..731e2769bf
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -0,0 +1,305 @@
+@@ -0,0 +1,309 @@
 +/*
 + *  Copyright (C) 2005-2018 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -2502,7 +2502,7 @@ index 0000000000..abc656e6fd
 +CDVDVideoCodecAmlogic::CDVDVideoCodecAmlogic(CProcessInfo &processInfo)
 +  : CDVDVideoCodec(processInfo)
 +  , m_pFormatName("amcodec")
-+  , m_opened(false)
++  , m_state(NEW)
 +  , m_codecControlFlags(0)
 +{
 +}
@@ -2541,11 +2541,11 @@ index 0000000000..abc656e6fd
 +  // allow only 1 instance here
 +  if (m_InstanceGuard.exchange(true))
 +  {
-+    CLog::Log(LOGERROR, "CDVDVideoCodecAmlogic::Open - InstanceGuard locked\n");
++    CLog::Log(LOGERROR, "CDVDVideoCodecAmlogic::Open - InstanceGuard locked");
 +    return false;
 +  }
 +
-+  m_opened = false;
++  m_state = IN_USE;
 +
 +  m_hints = hints;
 +
@@ -2623,6 +2623,8 @@ index 0000000000..abc656e6fd
 +
 +void CDVDVideoCodecAmlogic::Dispose(void)
 +{
++  CLog::Log(LOGDEBUG, "CDVDVideoCodecAmlogic::Dispose called");
++
 +  m_videoBufferPool = nullptr;
 +
 +  if (m_codec) {
@@ -2631,8 +2633,10 @@ index 0000000000..abc656e6fd
 +
 +  m_videobuffer.iFlags = 0;
 +
-+  m_opened = false;
-+  m_InstanceGuard.exchange(false);
++  if (m_state != NEW) {
++    m_InstanceGuard.exchange(false);
++    m_state = NEW;
++  }
 +}
 +
 +bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
@@ -2653,7 +2657,7 @@ index 0000000000..abc656e6fd
 +      return true;
 +  }
 +
-+  if (!m_opened) {
++  if (m_state != OPEN) {
 +    if (packet.pts == DVD_NOPTS_VALUE) {
 +      m_hints.ptsinvalid = true;
 +    }
@@ -2664,7 +2668,7 @@ index 0000000000..abc656e6fd
 +
 +    m_videoBufferPool = std::shared_ptr<CAMLVideoBufferPool>(new CAMLVideoBufferPool());
 +
-+    m_opened = true;
++    m_state = OPEN;
 +  }
 +
 +  return m_codec->addData(pData, iSize, packet.dts, m_hints.ptsinvalid ? DVD_NOPTS_VALUE : packet.pts, packet.subtitlePlane);
@@ -2740,10 +2744,10 @@ index 0000000000..abc656e6fd
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
 new file mode 100644
-index 0000000000..769051f211
+index 0000000000..09c3b7f564
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.h
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,93 @@
 +/*
 + *  Copyright (C) 2005-2018 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -2824,7 +2828,11 @@ index 0000000000..769051f211
 +
 +  const char     *m_pFormatName;
 +  VideoPicture m_videobuffer;
-+  bool            m_opened;
++
++  enum {
++	  NEW, IN_USE, OPEN
++  } m_state;
++
 +  int             m_codecControlFlags;
 +  CDVDStreamInfo  m_hints;
 +  float           m_aspect_ratio;
@@ -2941,10 +2949,10 @@ index 0000000000..ef2832e1cb
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.cpp
 new file mode 100644
-index 0000000000..69cc037e2c
+index 0000000000..a2766a3f21
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.cpp
-@@ -0,0 +1,1310 @@
+@@ -0,0 +1,1355 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -3216,6 +3224,7 @@ index 0000000000..69cc037e2c
 +
 +	extradata = (uint8_t*)malloc(hints.extrasize);
 +	extrasize = hints.extrasize;
++	memcpy(extradata, hints.extradata, hints.extrasize);
 +}
 +
 +bool AMLInsecureVideoCodec::handleMasteringMetadata(const CDVDStreamInfo &hints) const
@@ -3302,6 +3311,12 @@ index 0000000000..69cc037e2c
 +void AMLInsecureVideoCodec::getDeinterlacingMethods(std::list<EINTERLACEMETHOD> &methods) const
 +{
 +	methods.clear();
++}
++
++std::string AMLInsecureVideoCodec::getCodecPrivateConfiguration() const
++{
++	// nothing to configure yet
++	return "";
 +}
 +
 +void AMLInsecureVideoCodec::setupVideoCodecParams(aml_generic_param &params) const
@@ -3474,6 +3489,13 @@ index 0000000000..69cc037e2c
 +
 +	// setup video codec parameters
 +	setupVideoCodecParams(m_am_private->gcodec);
++
++	// setup private, codec specific configuration
++	std::string codecConfig = getCodecPrivateConfiguration();
++	if (!codecConfig.empty()) {
++		m_am_private->gcodec.config = const_cast<char*> (codecConfig.c_str());
++		m_am_private->gcodec.config_len = (int) codecConfig.size();
++	}
 +
 +	m_am_private->gcodec.param = (void *)((std::uintptr_t)m_am_private->gcodec.param | (m_am_private->video_rotation_degree << 16));
 +
@@ -3968,6 +3990,30 @@ index 0000000000..69cc037e2c
 +	return 0;
 +}
 +
++void AMLInsecureVideoCodec::setPictureStereoMode(VideoPicture *pVideoPicture)
++{
++	pVideoPicture->stereoMode = m_hints.stereo_mode;
++
++	if (pVideoPicture->stereoMode.empty() || !m_processInfo.GetVideoSettings().m_StereoInvert) {
++		// either no stereo mode or it shouldn't be inverted
++		return;
++	}
++
++	if (pVideoPicture->stereoMode == "left_right") {
++		pVideoPicture->stereoMode = "right_left";
++	} else if (pVideoPicture->stereoMode == "right_left") {
++		pVideoPicture->stereoMode = "left_right";
++	} else if (pVideoPicture->stereoMode == "top_bottom") {
++		pVideoPicture->stereoMode = "bottom_top";
++	} else if (pVideoPicture->stereoMode == "bottom_top") {
++		pVideoPicture->stereoMode = "top_bottom";
++	} else if (pVideoPicture->stereoMode == "block_lr") {
++		pVideoPicture->stereoMode = "block_rl";
++	} else if (pVideoPicture->stereoMode == "block_rl") {
++		pVideoPicture->stereoMode = "block_lr";
++	}
++}
++
 +CDVDVideoCodec::VCReturn AMLInsecureVideoCodec::getPicture(VideoPicture *pVideoPicture)
 +{
 +	if (!m_opened) {
@@ -3994,6 +4040,8 @@ index 0000000000..69cc037e2c
 +
 +		CLog::Log(LOGDEBUG, LOGVIDEO, "AMLInsecureVideoCodec::getPicture: index: %u, pts: %0.3lf, dur:%0.3lfms",
 +			m_bufferIndex, pVideoPicture->pts / DVD_TIME_BASE, pVideoPicture->iDuration / 1000);
++
++		setPictureStereoMode(pVideoPicture);
 +
 +		return CDVDVideoCodec::VC_PICTURE;
 +	} else if (m_drain) {
@@ -4057,21 +4105,6 @@ index 0000000000..69cc037e2c
 +	} else {
 +		return 0;
 +	}
-+}
-+
-+void AMLInsecureVideoCodec::setMvcViewMode(const int viewMode) const
-+{
-+  // set MVC view mode:
-+  //	0 ... left
-+  //	1 ... right
-+  //	2 ... left<->right
-+  //	3 ... right<->left
-+  SysfsUtils::SetInt("/sys/module/amvdec_h264mvc/parameters/view_mode", viewMode);
-+}
-+
-+void AMLInsecureVideoCodec::setFramepackingSupport(const bool enable) const
-+{
-+  SysfsUtils::SetInt("/sys/module/amvideo/parameters/framepacking_support", enable ? 1 : 0);
 +}
 +
 +void AMLInsecureVideoCodec::setFramepackingResolution(const int width, const int height, const int blanking) const
@@ -4175,7 +4208,7 @@ index 0000000000..69cc037e2c
 +
 +	if (m_guiStereoMode == RENDER_STEREO_MODE_MONO) {
 +		std::string videoStereoMode = m_processInfo.GetVideoStereoMode();
-+		if (videoStereoMode == "left_right" || videoStereoMode == "righ_left")
++		if (videoStereoMode == "left_right" || videoStereoMode == "right_left")
 +			dst_rect.x2 *= 2.0;
 +		else if (videoStereoMode == "top_bottom" || videoStereoMode == "bottom_top")
 +			dst_rect.y2 *= 2.0;
@@ -4191,32 +4224,7 @@ index 0000000000..69cc037e2c
 +		setFramepackingResolution(info.iWidth, info.iHeight, info.iBlanking);
 +	}
 +
-+	bool isMvc = videoStereoMode == "block_lr" || videoStereoMode == "block_rl";
-+
-+	if (isMvc) {
-+		int view_mode = videoStereoMode == "block_lr" ? 3 : 2;
-+
-+		if (m_guiStereoMode == RENDER_STEREO_MODE_HARDWAREBASED) {
-+			setFramepackingSupport(true);
-+			m_libamcodec->set3dVideoMode(VIDEO_MODE_3D_MVC_FP);
-+			setMvcViewMode(view_mode);
-+		} else if (m_guiStereoMode == RENDER_STEREO_MODE_SPLIT_VERTICAL) {
-+			setFramepackingSupport(false);
-+			m_libamcodec->set3dVideoMode(VIDEO_MODE_3D_MVC_SBS);
-+			setMvcViewMode(view_mode);
-+		} else if (m_guiStereoMode == RENDER_STEREO_MODE_SPLIT_HORIZONTAL) {
-+			setFramepackingSupport(false);
-+			m_libamcodec->set3dVideoMode(VIDEO_MODE_3D_MVC_HTAB);
-+			setMvcViewMode(view_mode);
-+		} else if (m_guiStereoMode == RENDER_STEREO_MODE_MONO || m_guiStereoMode == RENDER_STEREO_MODE_OFF) {
-+			setFramepackingSupport(false);
-+			m_libamcodec->set3dVideoMode(VIDEO_MODE_3D_MVC_MONO);
-+			setMvcViewMode(videoStereoMode == "block_lr" ? 0 : 1);
-+		}
-+	} else {
-+		setFramepackingSupport(false);
-+		m_libamcodec->set3dVideoMode(VIDEO_MODE_3D_MVC_MONO);
-+	}
++	setVideoMode(videoStereoMode, m_guiStereoMode);
 +
 +	std::string s_dst_rect = StringUtils::Format("%i,%i,%i,%i", (int) dst_rect.x1, (int) dst_rect.y1, (int) dst_rect.Width(), (int) dst_rect.Height());
 +	std::string s_m_dst_rect = StringUtils::Format("%i,%i,%i,%i", (int) m_dst_rect.x1, (int) m_dst_rect.y1, (int) m_dst_rect.Width(),
@@ -4251,16 +4259,61 @@ index 0000000000..69cc037e2c
 +	showMainVideo(true);
 +}
 +
++void AMLInsecureVideoCodec::setVideoMode(std::string videoInputMode, RENDER_STEREO_MODE videoOutputMode)
++{
++	video_input_mode vimode = VIDEO_INPUT_MODE_2D;
++	video_output_mode vomode = VIDEO_OUTPUT_MODE_2D;
++	bool leftEyeFirst = true;
++
++	if (videoInputMode == "left_right") {
++		vimode = VIDEO_INPUT_MODE_HSBS;
++	} else if (videoInputMode == "right_left") {
++		vimode = VIDEO_INPUT_MODE_HSBS;
++		leftEyeFirst = false;
++	} else if (videoInputMode == "top_bottom") {
++		vimode = VIDEO_INPUT_MODE_HTAB;
++	} else if (videoInputMode == "bottom_top") {
++		vimode = VIDEO_INPUT_MODE_HTAB;
++		leftEyeFirst = false;
++	} else if (videoInputMode == "block_lr") {
++		vimode = VIDEO_INPUT_MODE_MVC;
++	} else if (videoInputMode == "block_rl") {
++		vimode = VIDEO_INPUT_MODE_MVC;
++		leftEyeFirst = false;
++	}
++
++	if (vimode != VIDEO_INPUT_MODE_2D) {
++		switch (videoOutputMode) {
++			case RENDER_STEREO_MODE_SPLIT_VERTICAL:
++				vomode = VIDEO_OUTPUT_MODE_HSBS;
++				break;
++
++			case RENDER_STEREO_MODE_SPLIT_HORIZONTAL:
++				vomode = VIDEO_OUTPUT_MODE_HTAB;
++				break;
++
++			case RENDER_STEREO_MODE_HARDWAREBASED:
++				vomode = VIDEO_OUTPUT_MODE_FP;
++				break;
++
++			default:
++				break;
++		}
++	}
++
++	m_libamcodec->setVideoMode(vimode, vomode, leftEyeFirst);
++}
++
 +double AMLInsecureVideoCodec::getAspectRatio() const
 +{
 +	return m_opened ? m_hints.aspect : 0;
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.h
 new file mode 100644
-index 0000000000..1cc6528ea9
+index 0000000000..8981269775
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLInsecureVideoCodec.h
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,152 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -4308,8 +4361,6 @@ index 0000000000..1cc6528ea9
 +	void setVideoBrightness(const int brightness) const;
 +
 +	void setFramepackingResolution(const int width, const int height, const int blanking) const;
-+	void setFramepackingSupport(const bool enable) const;
-+	void setMvcViewMode(const int viewMode) const;
 +
 +	int getVideoContrast() const;
 +	int getVideoBrightness() const;
@@ -4372,6 +4423,7 @@ index 0000000000..1cc6528ea9
 +	virtual void enableCustomMasterDataDisplay(bool enable = true) const;
 +	virtual void getDeinterlacingMethods(std::list<EINTERLACEMETHOD> &methods) const;
 +	virtual void setupVideoCodecParams(aml_generic_param &params) const;
++	virtual std::string getCodecPrivateConfiguration() const;
 +
 +	virtual int pre_header_feeding(am_private_t *para, am_packet_t *pkt) const;
 +	virtual int set_header_info(am_private_t *para) const;
@@ -4385,6 +4437,9 @@ index 0000000000..1cc6528ea9
 +	virtual void playbackPause();
 +	virtual void playbackResume();
 +	virtual void playbackResume(int speed);
++
++	virtual void setVideoMode(std::string videoInputMode, RENDER_STEREO_MODE videoOutputMode);
++	virtual void setPictureStereoMode(VideoPicture *pVideoPicture);
 +
 +public:
 +	AMLInsecureVideoCodec(CProcessInfo &processInfo);
@@ -4588,10 +4643,10 @@ index 0000000000..d84ec3af3d
 +
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLVideoCodecDataTypes.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLVideoCodecDataTypes.h
 new file mode 100644
-index 0000000000..8b90dbdd6f
+index 0000000000..1f54531bf1
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/AMLVideoCodecDataTypes.h
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,101 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -4642,8 +4697,6 @@ index 0000000000..8b90dbdd6f
 +		} else {
 +			size = newSize;
 +		}
-+
-+		size = 0;
 +	}
 +
 +	void free() {
@@ -4736,10 +4789,10 @@ index 0000000000..0c7740448b
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/H264Codec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/H264Codec.cpp
 new file mode 100644
-index 0000000000..8cb5d3b6d8
+index 0000000000..104cc2f66d
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/H264Codec.cpp
-@@ -0,0 +1,259 @@
+@@ -0,0 +1,251 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -4920,14 +4973,6 @@ index 0000000000..8cb5d3b6d8
 +
 +	if (m_isMvc && ret == CDVDVideoCodec::VC_PICTURE) {
 +		pVideoPicture->m_3dSubtitleDepth = m_secureOSMC->getMvcSubtitleDepth(pVideoPicture->pts/DVD_TIME_BASE);
-+
-+		pVideoPicture->stereoMode = m_hints.stereo_mode;
-+
-+		if (pVideoPicture->stereoMode == "block_lr" && m_processInfo.GetVideoSettings().m_StereoInvert) {
-+			pVideoPicture->stereoMode = "block_rl";
-+		} else if (pVideoPicture->stereoMode == "block_rl" && m_processInfo.GetVideoSettings().m_StereoInvert) {
-+			pVideoPicture->stereoMode = "block_lr";
-+		}
 +	}
 +
 +	return ret;
@@ -5059,10 +5104,10 @@ index 0000000000..1f3fa3e1df
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/HEVCCodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/HEVCCodec.cpp
 new file mode 100644
-index 0000000000..5a7b5aeebd
+index 0000000000..5b9c49dc1c
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/HEVCCodec.cpp
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,142 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -5152,6 +5197,7 @@ index 0000000000..5a7b5aeebd
 +{
 +	AMLInsecureVideoCodec::setupVideoCodecParams(params);
 +
++	params.decoder_type = DECODER_TYPE_FRAME_MODE;
 +	params.param = (void*) EXTERNAL_PTS;
 +	if (m_hints.ptsinvalid) {
 +		params.param = (void*) (EXTERNAL_PTS | SYNC_OUTSIDE);
@@ -5247,10 +5293,10 @@ index 0000000000..5c8655bd15
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.cpp
 new file mode 100644
-index 0000000000..e355be2913
+index 0000000000..ce0113740e
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.cpp
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,304 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -5305,6 +5351,8 @@ index 0000000000..e355be2913
 +
 +  virtual void codec_set_log_callback(void (*logf)(const char *, ...))=0;
 +  virtual int codec_set_3d_video_mode(codec_para_t *pcodec, video_mode_3d_t mode)=0;
++  virtual int codec_set_video_mode(codec_para_t *pcodec, video_input_mode vimode, video_output_mode vomode, int left_eye_first)=0;
++  virtual int codec_set_hdr10p_metadata(codec_para_t *pcodec, void *metadata, int metadata_size)=0;
 +};
 +
 +class amlogic::DllLibAmCodec : public DllDynamic, LibamCodecInterface
@@ -5335,8 +5383,10 @@ index 0000000000..e355be2913
 +  DEFINE_METHOD2(int, codec_get_video_delay_limited_ms, (codec_para_t *p1, int *p2))
 +  DEFINE_METHOD2(int, codec_get_video_cur_delay_ms, (codec_para_t *p1, int *p2))
 +
-+  DEFINE_METHOD_FP(void, codec_set_log_callback,   (void (*)(const char *, ...)))
-+  DEFINE_METHOD2(int, codec_set_3d_video_mode, (codec_para_t *p1, video_mode_3d_t p2))
++  DEFINE_METHOD_FP(void, codec_set_log_callback, (void (*)(const char *, ...)))
++  DEFINE_METHOD2(int, codec_set_3d_video_mode,   (codec_para_t *p1, video_mode_3d_t p2))
++  DEFINE_METHOD4(int, codec_set_video_mode,      (codec_para_t *p1, video_input_mode p2, video_output_mode p3, int p4))
++  DEFINE_METHOD3(int, codec_set_hdr10p_metadata, (codec_para_t *p1, void *p2, int p3))
 +
 +  BEGIN_METHOD_RESOLVE()
 +    RESOLVE_METHOD(codec_init)
@@ -5365,6 +5415,8 @@ index 0000000000..e355be2913
 +
 +    RESOLVE_METHOD_OPTIONAL_FP(codec_set_log_callback)
 +    RESOLVE_METHOD(codec_set_3d_video_mode)
++    RESOLVE_METHOD(codec_set_video_mode)
++    RESOLVE_METHOD(codec_set_hdr10p_metadata)
 +  END_METHOD_RESOLVE()
 +
 +public:
@@ -5441,6 +5493,8 @@ index 0000000000..e355be2913
 +	m_codec->stream_type		= gparam.stream_type;
 +	m_codec->decoder_type		= gparam.decoder_type;
 +	m_codec->display_mode		= gparam.display_mode;
++	m_codec->config				= gparam.config;
++	m_codec->config_len			= gparam.config_len;
 +	m_codec->am_sysinfo.format	= gparam.format;
 +	m_codec->am_sysinfo.width	= gparam.width;
 +	m_codec->am_sysinfo.height	= gparam.height;
@@ -5504,6 +5558,16 @@ index 0000000000..e355be2913
 +	return m_dll->codec_set_3d_video_mode(m_codec, mode);
 +}
 +
++int LibAmcodec::setVideoMode(video_input_mode vimode, video_output_mode vomode, bool leftEyeFirst)
++{
++	return m_dll->codec_set_video_mode(m_codec, vimode, vomode, leftEyeFirst ? 1 : 0);
++}
++
++int LibAmcodec::setHdr10pMetadata(unsigned char *metadata, int metadata_length)
++{
++	return m_dll->codec_set_hdr10p_metadata(m_codec, metadata, metadata_length);
++}
++
 +int LibAmcodec::getVdecState(struct vdec_status &vs) const
 +{
 +	return m_dll->codec_get_vdec_state(m_codec, &vs);
@@ -5539,10 +5603,10 @@ index 0000000000..e355be2913
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.h b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.h
 new file mode 100644
-index 0000000000..dd3868b7e2
+index 0000000000..d7d36411a1
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/LibAmcodec.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,99 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -5568,6 +5632,22 @@ index 0000000000..dd3868b7e2
 +	VIDEO_MODE_3D_MVC_MONO = 4
 +} video_mode_3d_t;
 +
++typedef enum {
++	VIDEO_INPUT_MODE_2D = 1,
++	VIDEO_INPUT_MODE_HSBS = 2,
++	VIDEO_INPUT_MODE_HTAB = 3,
++	VIDEO_INPUT_MODE_FSBS = 4,
++	VIDEO_INPUT_MODE_FTAB = 5,
++	VIDEO_INPUT_MODE_MVC = 6
++} video_input_mode;
++
++typedef enum {
++	VIDEO_OUTPUT_MODE_2D = 1,
++	VIDEO_OUTPUT_MODE_HSBS = 2,
++	VIDEO_OUTPUT_MODE_HTAB = 3,
++	VIDEO_OUTPUT_MODE_FP = 4
++} video_output_mode;
++
 +typedef struct {
 +	bool noblock;
 +	int video_pid;
@@ -5585,6 +5665,8 @@ index 0000000000..dd3868b7e2
 +	unsigned int ratio;
 +	unsigned long long ratio64;
 +	void *param;
++	int config_len;
++	char *config;
 +} aml_generic_param;
 +
 +class amlogic::LibAmcodec
@@ -5619,6 +5701,8 @@ index 0000000000..dd3868b7e2
 +	int setControlSyncThreshold(unsigned int threshold);
 +	int setVideoDelayLimitedMs(int delay);
 +	int set3dVideoMode(video_mode_3d_t mode);
++	int setVideoMode(video_input_mode vimode, video_output_mode vomode, bool leftEyeFirst);
++	int setHdr10pMetadata(unsigned char *metadata, int metadata_length);
 +	void setNoBlockMode(bool noblock);
 +	void setStreamType(stream_type_t type);
 +};
@@ -6287,10 +6371,10 @@ index 0000000000..b590b4d18e
 +
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VC1Codec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VC1Codec.cpp
 new file mode 100644
-index 0000000000..74ad3b1527
+index 0000000000..3eac103d32
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VC1Codec.cpp
-@@ -0,0 +1,308 @@
+@@ -0,0 +1,371 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -6378,10 +6462,73 @@ index 0000000000..74ad3b1527
 +
 +bool VC1Codec::prepareFrame(CDVDStreamInfo &hints, uint8_t *&data, size_t &size, double dts, double pts)
 +{
-+	if (m_processInfo.GetVideoSettings().m_InterlaceMethod == VS_INTERLACEMETHOD_NONE) {
-+		SysfsUtils::SetInt("/sys/module/amvdec_vc1/parameters/force_prog", 1);
-+	} else {
-+		SysfsUtils::SetInt("/sys/module/amvdec_vc1/parameters/force_prog", 0);
++	char fcm;
++	std::string FCM;
++	bool interlaced = true;
++	unsigned int i; 
++	int progressive, frameinterlace, hdr_start = 0;
++
++	if ( !((data) && (size >= 4)
++		&& (data[0] == 0) && (data[1] == 0)
++		&& (data[2] == 1) && (data[3] == 0xd || data[3] == 0xf)))
++	{
++		CLog::Log(LOGDEBUG, "VC1Codec::prepareFrame No start code at start of packet");
++		// nothing to do here
++		return true;
++	}
++
++	if (data[3] == 0xf && size > 9) {
++		interlaced = data[9] & 0x40;
++		// sequence start - look for the first frame
++		for (i=4; i < size - 5; i++)
++		{
++			if ((data[i] << 24 | data[i+1] << 16 | data[i+2] << 8 | data[i+3]) == 0x0000010d)
++			{
++				hdr_start = i + 4;
++				break;
++			}
++		}
++		if (hdr_start == 0)
++			return true;
++	}
++	else if (data[3] == 0xd  && size > 4)
++		hdr_start = 4;
++
++	fcm = 0;
++	if (interlaced)
++		fcm = data[hdr_start] >> 6;
++	if (fcm < 0x2)
++		fcm = 0;
++
++	if (fcm == 0)
++		FCM = "Progressive";
++	else if (fcm == 0x2)
++		FCM = "Frame interlace";
++	else
++		FCM = "Field interlace";
++
++	if (hdr_start > 4)
++	{
++		if ( SysfsUtils::GetInt("/sys/module/amvdec_vc1/parameters/force_frameint", frameinterlace))
++			return true;
++		if (m_processInfo.GetVideoSettings().m_InterlaceMethod == VS_INTERLACEMETHOD_DEINTERLACE)
++		{
++			progressive = 0;
++			FCM = "Field interlace";
++		}
++		else if (m_processInfo.GetVideoSettings().m_InterlaceMethod == VS_INTERLACEMETHOD_NONE)
++		{
++			progressive = 1;
++			FCM = "Frame interlace/progressive";
++		}
++		else
++			progressive = fcm < 3 ? 1 : 0;
++		
++		if (frameinterlace != progressive)
++		{
++			SysfsUtils::SetInt("/sys/module/amvdec_vc1/parameters/force_frameint", progressive);
++			CLog::Log(LOGDEBUG, "VC1Codec::prepareFrame deinterlace changed to %s", FCM);
++		}
 +	}
 +
 +	return true;
@@ -6649,10 +6796,10 @@ index 0000000000..19a19e3fd5
 +};
 diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VP9Codec.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VP9Codec.cpp
 new file mode 100644
-index 0000000000..7eac2dd3ce
+index 0000000000..839d6899b5
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/amlogic/VP9Codec.cpp
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,222 @@
 +/*
 + *  Copyright (C) 2005-2022 Team Kodi
 + *  This file is part of Kodi - https://kodi.tv
@@ -6869,6 +7016,7 @@ index 0000000000..7eac2dd3ce
 +{
 +	AMLInsecureVideoCodec::setupVideoCodecParams(params);
 +
++	params.decoder_type = DECODER_TYPE_FRAME_MODE;
 +	params.param = (void*) EXTERNAL_PTS;
 +	if (m_hints.ptsinvalid) {
 +		params.param = (void*) (EXTERNAL_PTS | SYNC_OUTSIDE);
@@ -6994,7 +7142,7 @@ index 795b9c11e1..57b211d42a 100644
      m_dtsAtDisplayTime = DVD_NOPTS_VALUE;
      return m_IDemux->SeekTime(timems, backwards, startpts);
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-index 95043cc579..69416bfd35 100644
+index 0409fab6c4..98e37a554a 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 @@ -17,6 +17,8 @@
@@ -7069,7 +7217,7 @@ index 95043cc579..69416bfd35 100644
  }
  
  void CDVDDemuxFFmpeg::Abort()
-@@ -1022,6 +1021,17 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
+@@ -1025,6 +1024,17 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
      {
        Flush();
      }
@@ -7087,7 +7235,7 @@ index 95043cc579..69416bfd35 100644
      // check size and stream index for being in a valid range
      else if (m_pkt.pkt.size < 0 ||
               m_pkt.pkt.stream_index < 0 ||
-@@ -1039,6 +1049,9 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
+@@ -1042,6 +1052,9 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
  
        m_pkt.result = -1;
        av_packet_unref(&m_pkt.pkt);
@@ -7097,7 +7245,7 @@ index 95043cc579..69416bfd35 100644
      }
      else
      {
-@@ -1063,7 +1076,8 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
+@@ -1066,7 +1079,8 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
  
        if (IsTransportStreamReady())
        {
@@ -7107,7 +7255,7 @@ index 95043cc579..69416bfd35 100644
          {
            /* check so packet belongs to selected program */
            for (unsigned int i = 0; i < m_pFormatContext->programs[m_program]->nb_stream_indexes; i++)
-@@ -1169,7 +1183,8 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
+@@ -1172,7 +1186,8 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
      else if (stream->type == STREAM_VIDEO)
      {
        if (static_cast<CDemuxStreamVideo*>(stream)->iWidth != m_pFormatContext->streams[pPacket->iStreamId]->codecpar->width ||
@@ -7117,7 +7265,7 @@ index 95043cc579..69416bfd35 100644
        {
          // content has changed
          stream = AddStream(pPacket->iStreamId);
-@@ -1178,6 +1193,12 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
+@@ -1181,6 +1196,12 @@ DemuxPacket* CDVDDemuxFFmpeg::Read()
          pPacket->recoveryPoint = m_seekToKeyFrame;
        m_seekToKeyFrame = false;
      }
@@ -7130,7 +7278,7 @@ index 95043cc579..69416bfd35 100644
      if (!stream)
      {
        CDVDDemuxUtils::FreeDemuxPacket(pPacket);
-@@ -1220,6 +1241,8 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double* startpts)
+@@ -1223,6 +1244,8 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double* startpts)
  
      return true;
    }
@@ -7139,7 +7287,7 @@ index 95043cc579..69416bfd35 100644
  
    if (!m_pInput->Seek(0, SEEK_POSSIBLE) &&
        !m_pInput->IsStreamType(DVDSTREAM_TYPE_FFMPEG))
-@@ -1301,7 +1324,7 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double* startpts)
+@@ -1304,7 +1327,7 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double* startpts)
    if (m_currentPts == DVD_NOPTS_VALUE)
      CLog::Log(LOGDEBUG, "%s - unknown position after seek", __FUNCTION__);
    else
@@ -7148,7 +7296,7 @@ index 95043cc579..69416bfd35 100644
  
    // in this case the start time is requested time
    if (startpts)
-@@ -1329,6 +1352,9 @@ bool CDVDDemuxFFmpeg::SeekByte(int64_t pos)
+@@ -1332,6 +1355,9 @@ bool CDVDDemuxFFmpeg::SeekByte(int64_t pos)
    m_pkt.result = -1;
    av_packet_unref(&m_pkt.pkt);
  
@@ -7158,7 +7306,7 @@ index 95043cc579..69416bfd35 100644
    return (ret >= 0);
  }
  
-@@ -1530,6 +1556,17 @@ void CDVDDemuxFFmpeg::DisposeStreams()
+@@ -1533,6 +1559,17 @@ void CDVDDemuxFFmpeg::DisposeStreams()
    m_parsers.clear();
  }
  
@@ -7176,7 +7324,7 @@ index 95043cc579..69416bfd35 100644
  CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
  {
    AVStream* pStream = m_pFormatContext->streams[streamIdx];
-@@ -1571,6 +1608,13 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1574,6 +1611,13 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
        }
        case AVMEDIA_TYPE_VIDEO:
        {
@@ -7190,7 +7338,7 @@ index 95043cc579..69416bfd35 100644
          CDemuxStreamVideoFFmpeg* st = new CDemuxStreamVideoFFmpeg(pStream);
          stream = st;
          if (strcmp(m_pFormatContext->iformat->name, "flv") == 0)
-@@ -1579,11 +1623,23 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1582,11 +1626,23 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
            st->bVFR = false;
  
          // never trust pts in avi files with h264.
@@ -7215,7 +7363,7 @@ index 95043cc579..69416bfd35 100644
          //average fps is more accurate for mkv files
          if (m_bMatroska && pStream->avg_frame_rate.den && pStream->avg_frame_rate.num)
          {
-@@ -1595,6 +1651,11 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1598,6 +1654,11 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
            st->iFpsRate = r_frame_rate.num;
            st->iFpsScale = r_frame_rate.den;
          }
@@ -7227,7 +7375,7 @@ index 95043cc579..69416bfd35 100644
          else
          {
            st->iFpsRate  = 0;
-@@ -1616,9 +1677,19 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1619,9 +1680,19 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
          if (pStream->codecpar->height)
            st->fAspect *= (double)pStream->codecpar->width / pStream->codecpar->height;
          st->iOrientation = 0;
@@ -7248,7 +7396,7 @@ index 95043cc579..69416bfd35 100644
          st->colorPrimaries = pStream->codecpar->color_primaries;
          st->colorSpace = pStream->codecpar->color_space;
          st->colorTransferCharacteristic = pStream->codecpar->color_trc;
-@@ -1670,7 +1741,60 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1673,7 +1744,63 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
          }
          if (av_dict_get(pStream->metadata, "title", NULL, 0))
            st->m_description = av_dict_get(pStream->metadata, "title", NULL, 0)->value;
@@ -7268,7 +7416,10 @@ index 95043cc579..69416bfd35 100644
 +              m_pSSIF->SetBluRay(pExt);
 +
 +              st->stereo_mode = pExt && pExt->AreEyesFlipped() ? "block_rl" : "block_lr";
-+              mvcStream = static_cast<CDemuxMVC*>(pExt->GetExtentionDemux())->GetAVStream();
+ 
++              CDemuxMVC *extDemux = static_cast<CDemuxMVC*>(pExt->GetExtentionDemux());
++              extDemux->SetStartTime(m_pFormatContext->start_time);
++              mvcStream = extDemux->GetAVStream();
 +            }
 +            else if (CDVDCodecUtils::GetH264MvcStreamIndex(m_pFormatContext, &mvcIndex))
 +            {
@@ -7301,7 +7452,7 @@ index 95043cc579..69416bfd35 100644
 +          else if (CDVDCodecUtils::ProcessH264MVCExtradata(pStream->codecpar->extradata, pStream->codecpar->extradata_size))
 +          {
 +            pStream->codecpar->codec_tag = MKTAG('M', 'V', 'C', '1');
- 
++
 +            // use lr if we don't know what the stereo mode is
 +            st->stereo_mode = stereoMode.empty() ? "block_lr" : stereoMode;
 +          }
@@ -7309,7 +7460,7 @@ index 95043cc579..69416bfd35 100644
          break;
        }
        case AVMEDIA_TYPE_DATA:
-@@ -1696,6 +1820,16 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
+@@ -1699,6 +1826,16 @@ CDemuxStream* CDVDDemuxFFmpeg::AddStream(int streamIdx)
            if (av_dict_get(pStream->metadata, "title", NULL, 0))
              st->m_description = av_dict_get(pStream->metadata, "title", NULL, 0)->value;
  
@@ -7326,7 +7477,7 @@ index 95043cc579..69416bfd35 100644
            break;
          }
        }
-@@ -1991,7 +2125,20 @@ bool CDVDDemuxFFmpeg::SeekChapter(int chapter, double* startpts)
+@@ -1994,7 +2131,20 @@ bool CDVDDemuxFFmpeg::SeekChapter(int chapter, double* startpts)
  
    AVChapter* ch = m_pFormatContext->chapters[chapter - 1];
    double dts = ConvertTimestamp(ch->start, ch->time_base.den, ch->time_base.num);
@@ -7348,7 +7499,7 @@ index 95043cc579..69416bfd35 100644
  }
  
  std::string CDVDDemuxFFmpeg::GetStreamCodecName(int iStreamId)
-@@ -2022,6 +2169,11 @@ std::string CDVDDemuxFFmpeg::GetStreamCodecName(int iStreamId)
+@@ -2025,6 +2175,11 @@ std::string CDVDDemuxFFmpeg::GetStreamCodecName(int iStreamId)
  
  bool CDVDDemuxFFmpeg::IsProgramChange()
  {
@@ -7391,10 +7542,10 @@ index 3fe4b507ea..7463920a13 100644
  
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp
 new file mode 100644
-index 0000000000..ba9205a06e
+index 0000000000..59d1cd1c3a
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.cpp
-@@ -0,0 +1,268 @@
+@@ -0,0 +1,272 @@
 +/*
 +*      Copyright (C) 2005-2013 Team XBMC
 +*      http://xbmc.org
@@ -7646,8 +7797,12 @@ index 0000000000..ba9205a06e
 +  double timestamp = (double)pts * num / den;
 +  double starttime = 0.0f;
 +
-+  /*if (m_MVCFormatContext->start_time != (int64_t)AV_NOPTS_VALUE)
-+  starttime = (double)m_MVCFormatContext->start_time / AV_TIME_BASE;*/
++  CDVDInputStream::IMenus *menu = dynamic_cast<CDVDInputStream::IMenus*>(m_pInput);
++  if ((!menu || !menu->HasMenu()) &&
++      m_pFormatContext->start_time != static_cast<int64_t>(AV_NOPTS_VALUE))
++  {
++    starttime = static_cast<double>(m_start_time) / AV_TIME_BASE;
++  }
 +
 +  if (timestamp > starttime)
 +    timestamp -= starttime;
@@ -7665,10 +7820,10 @@ index 0000000000..ba9205a06e
 +}
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h
 new file mode 100644
-index 0000000000..f6466eec50
+index 0000000000..38028fc153
 --- /dev/null
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxMVC.h
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,60 @@
 +#pragma once
 +
 +/*
@@ -7715,6 +7870,8 @@ index 0000000000..f6466eec50
 +  virtual int GetNrOfStreams() const override { return 1; };
 +  virtual std::string GetFileName();
 +
++  void SetStartTime(int64_t start_time) { m_start_time = start_time; }
++
 +  AVStream* GetAVStream();
 +  CDVDInputStream*    m_pInput;
 +
@@ -7725,8 +7882,8 @@ index 0000000000..f6466eec50
 +  AVIOContext        *m_ioContext = nullptr;
 +  AVFormatContext    *m_pFormatContext = nullptr;
 +  int                 m_nStreamIndex = -1;
++  int64_t			  m_start_time;
 +};
-\ No newline at end of file
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxStreamSSIF.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DemuxStreamSSIF.cpp
 new file mode 100644
 index 0000000000..9b4389f49b
@@ -8531,7 +8688,7 @@ index 0a6bc07033..ea15db410a 100644
      }
    };
 diff --git a/xbmc/cores/VideoPlayer/VideoPlayer.cpp b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
-index 262ab3c412..1743a5437d 100644
+index ad24c2d7ed..91bafd1a9a 100644
 --- a/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 +++ b/xbmc/cores/VideoPlayer/VideoPlayer.cpp
 @@ -1285,18 +1285,15 @@ void CVideoPlayer::Prepare()
@@ -12061,7 +12218,7 @@ index ce83aa7f8e..90225d6be5 100644
    int GetWidth() const;
    int GetHeight() const;
 diff --git a/xbmc/windowing/Resolution.cpp b/xbmc/windowing/Resolution.cpp
-index 7e27d7b8a4..a578fa1897 100644
+index 7e27d7b8a4..eb19ee7330 100644
 --- a/xbmc/windowing/Resolution.cpp
 +++ b/xbmc/windowing/Resolution.cpp
 @@ -68,16 +68,16 @@ float RESOLUTION_INFO::DisplayRatio() const
@@ -12159,11 +12316,13 @@ index 7e27d7b8a4..a578fa1897 100644
            MathUtils::FloatEquals(info.fRefreshRate, fps * 2.5f, 0.01f))
        {
          CLog::Log(
-@@ -260,7 +263,7 @@ void CResolutionUtils::FindResolutionFromWhitelist(float fps, int width, int hei
+@@ -259,8 +262,8 @@ void CResolutionUtils::FindResolutionFromWhitelist(float fps, int width, int hei
+       const RESOLUTION_INFO info = CDisplaySettings::GetInstance().GetResolutionInfo(i);
  
        // pick the lowest resolution that has a matching refresh rate
-       if ((info.iScreenHeight >= height || info.iScreenWidth >= width) &&
+-      if ((info.iScreenHeight >= height || info.iScreenWidth >= width) &&
 -        (info.dwFlags & D3DPRESENTFLAG_MODEMASK) == (curr.dwFlags & D3DPRESENTFLAG_MODEMASK) &&
++      if ((info.iScreenHeight >= height && info.iScreenWidth >= width) &&
 +        ! (info.dwFlags & D3DPRESENTFLAG_MODEMASK) &&
            MathUtils::FloatEquals(info.fRefreshRate, fps, 0.01f))
        {

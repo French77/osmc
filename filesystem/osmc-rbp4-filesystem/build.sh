@@ -50,14 +50,18 @@ configure_build_env_nw "${DIR}"
 verify_action
 
 # Set up sources.list
-echo "deb http://deb.debian.org/debian $RLS main contrib non-free
+echo "deb https://deb.debian.org/debian $RLS main contrib non-free
 
-deb http://deb.debian.org/debian/ $RLS-updates main contrib non-free
+deb https://deb.debian.org/debian/ $RLS-updates main contrib non-free
 
-deb http://security.debian.org/ $RLS-security main contrib non-free
+deb https://security.debian.org/ $RLS-security main contrib non-free
 
-deb http://apt.osmc.tv $RLS main
+deb https://apt.osmc.tv $RLS main
 " > ${DIR}/etc/apt/sources.list
+
+# Debian minbase does not ship ca-certificates yet. Work around this
+inject_tls_patch ${DIR}
+verify_action
 
 # Performing chroot operation
 disable_init "${DIR}"
@@ -106,6 +110,9 @@ verify_action
 echo -e "       * Configuring rc.local"
 create_rc_local ${DIR}
 verify_action
+echo -e "       * Setting iptables to legacy"
+set_iptables_to_legacy ${DIR}
+verify_action
 echo -e "       * Adding system release information"
 add_rls_info ${DIR}
 verify_action
@@ -113,6 +120,10 @@ verify_action
 # Perform filesystem cleanup
 enable_init "${DIR}"
 cleanup_filesystem "${DIR}"
+
+# TLS cleanup
+remove_tls_patch ${DIR}
+verify_action
 
 # Remove QEMU binary
 chroot ${DIR} umount /proc

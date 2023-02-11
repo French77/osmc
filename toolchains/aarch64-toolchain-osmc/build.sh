@@ -54,14 +54,18 @@ configure_build_env_nw "${DIR}"
 verify_action
 
 # Set up sources.list
-echo "deb http://deb.debian.org/debian $RLS main contrib non-free
-deb http://deb.debian.org/debian/ $RLS-updates main contrib non-free
-deb http://security.debian.org/ $RLS-security main contrib non-free
+echo "deb https://deb.debian.org/debian $RLS main contrib non-free
+deb https://deb.debian.org/debian/ $RLS-updates main contrib non-free
+deb https://security.debian.org/ $RLS-security main contrib non-free
 " > ${DIR}/etc/apt/sources.list
+
+# Debian minbase does not ship ca-certificates yet. Work around this
+inject_tls_patch ${DIR}
+verify_action
 
 # Performing chroot operation
 chroot ${DIR} mount -t proc proc /proc
-add_apt_key_gpg "${DIR}" "http://apt.osmc.tv/osmc_repository.gpg" "osmc_repository.gpg"
+add_apt_key_gpg "${DIR}" "https://apt.osmc.tv/osmc_repository.gpg" "osmc_repository.gpg"
 echo -e "Updating sources"
 chroot ${DIR} apt-get update
 verify_action
@@ -69,13 +73,17 @@ echo -e "Installing packages"
 chroot ${DIR} apt-get -y install --no-install-recommends $CHROOT_PKGS
 verify_action
 echo -e "Adding OSMC repository"
-echo "deb http://apt.osmc.tv $RLS-devel main" >> ${DIR}/etc/apt/sources.list
+echo "deb https://apt.osmc.tv $RLS-devel main" >> ${DIR}/etc/apt/sources.list
 echo -e "Configuring ccache"
 configure_ccache "${DIR}"
 verify_action
 
 # Perform filesystem cleanup
 cleanup_filesystem "${DIR}"
+
+# TLS cleanup
+remove_tls_patch ${DIR}
+verify_action
 
 # Remove QEMU binary
 chroot ${DIR} umount /proc

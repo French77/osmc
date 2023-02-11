@@ -458,8 +458,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
         except:
             self.clear_busy_dialogue()
             log("Unhandled Exception thrown in Networking GUI\n%s" % traceback.format_exc())
-            message = "Unhandled Exeption caught - See log for details"
-            DIALOG.notification(self.lang(32004), message, time=2500, sound=False)
+            DIALOG.notification(self.lang(32004), self.lang(32106), time=2500, sound=False)
 
     def shutdown_process(self):
         """
@@ -588,11 +587,13 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
     @staticmethod
     def show_busy_dialogue():
-        xbmc.executebuiltin("ActivateWindow(busydialog)")
+        pass
+        #xbmc.executebuiltin("ActivateWindow(busydialog)")
 
     @staticmethod
     def clear_busy_dialogue():
-        xbmc.executebuiltin("Dialog.Close(busydialog)")
+        pass
+        #xbmc.executebuiltin("Dialog.Close(busydialog)")
 
     def toggle_controls(self, enabled, control_ids):
         for control_id in control_ids:
@@ -1303,7 +1304,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 osmc_network.wifi_disconnect(path)
 
                 if selection == 2:  # we also want to remove/forget this network
-                    osmc_network.wifi_remove(path, ssid)
+                    osmc_network.wifi_remove(path)
 
                 self.WFP.removeItem(self.WFP.getSelectedPosition())
                 self.toggle_controls(False, [SELECTOR_TETHERING])
@@ -1348,7 +1349,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                     if selection == 1:
                         self.show_busy_dialogue()
-                        osmc_network.wifi_remove(path, ssid)
+                        osmc_network.wifi_remove(path)
                         self.clear_busy_dialogue()
 
             if connect or hiddenssid:
@@ -1356,9 +1357,8 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                 hiddenssid = hiddenssid or ssid
                 # try without a password see if connman has the password
-                wifi_data = wifi.copy()
-                wifi_data['SSID'] = hiddenssid
-                connection_status = osmc_network.wifi_connect(wifi_data, self.lib_path)
+                connection_status = osmc_network.wifi_connect(path, None,
+                                                              hiddenssid, self.lib_path)
 
                 self.clear_busy_dialogue()
 
@@ -1370,10 +1370,10 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
 
                     if password:
                         self.wireless_password = password
-                        wifi_data['Passphrase'] = password
                         self.show_busy_dialogue()
 
-                        connection_status = osmc_network.wifi_connect(wifi_data, self.lib_path)
+                        connection_status = osmc_network.wifi_connect(path, password,
+                                                                      hiddenssid, self.lib_path)
                         self.clear_busy_dialogue()
 
                 if not connection_status:
@@ -1502,9 +1502,9 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 alias = item.getProperty('alias')
                 connected = item.getProperty('connected') == 'True'
 
-                #                                'Cancel'     'Re-connect'  'Remove Device'
+                #                                'Cancel'     'Re-connect'  'Disconnect'  'Remove Device'
                 selection = DIALOG.select(alias,
-                                          [self.lang(32051), self.lang(32075), self.lang(32021)])
+                                          [self.lang(32051), self.lang(32075) if not connected else self.lang(32058), self.lang(32021)])
 
                 if selection == -1 or selection == 0:
                     return
@@ -1519,6 +1519,12 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                         except:
                             pass
                         self.clear_busy_dialogue()
+                    else:
+                        try:
+                            if self.disconnect_bluetooth(address, alias):
+                                self.bluetooth_population_thread.update_bluetooth_lists()
+                        except:
+                            pass
 
                 elif selection == 2:
                     self.osmc_bluetooth.remove_device(address)
@@ -1533,9 +1539,9 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 alias = item.getProperty('alias')
 
                 #              'Connect With Device'
-                #              'No'        'Pair and Connect' 'pair'
+                #              'No'        'Pair and Connect'
                 selection = DIALOG.select(self.lang(32022) + ' ' + alias + '?',
-                                          [self.lang(32055), self.lang(32056), self.lang(32057)])
+                                          [self.lang(32055), self.lang(32056)])
 
                 if selection == -1 or selection == 0:
                     return
@@ -1569,6 +1575,21 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
         if not connected:
             #         'Connection to'                       'failed'
             message = self.lang(32024) + ' ' + alias + ' ' + self.lang(32025)
+            #                   'Bluetooth'
+            DIALOG.notification(self.lang(32003), message, time=2500, sound=False)
+
+        return connected
+
+    def disconnect_bluetooth(self, address, alias):
+        connected = True
+        try:
+            connected = self.osmc_bluetooth.disconnect_device(address)
+        except:
+            pass
+
+        if connected:
+            #         'Disconnect'                       'failed'
+            message = self.lang(32058) + ' ' + self.lang(32025)
             #                   'Bluetooth'
             DIALOG.notification(self.lang(32003), message, time=2500, sound=False)
 
@@ -1700,10 +1721,10 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                     DIALOG.ok(self.lang(32063), self.lang(32071))
                     return
 
-            log('Enabling ' + technology + ' Hotspot')
+            log('Enabling tethering: %s' % technology)
 
             if technology is 'wifi':
-                log('Hotspot ssid = ' + ssid)
+                log('Tethering is using SSID: %s' % ssid)
 
             if osmc_network.tethering_enable(technology, ssid, passphrase):
                 self.setFocusId(TETHERING_DISABLE)
@@ -1727,7 +1748,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
                 DIALOG.ok(self.lang(32063), self.lang(32072))
 
         if control_id == TETHERING_DISABLE:
-            log('Disabling Hotspot')
+            log('Disabling tethering')
             osmc_network.tethering_disable()
 
             self.setFocusId(SELECTOR_TETHERING)
@@ -1758,6 +1779,7 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
         if not os.path.isfile(self._crda_file):
             log('No CRDA file found.')
             self.default_crda_region = None
+            return
 
         with open(self._crda_file, 'r', encoding='utf-8') as file_handle:
             crda = file_handle.read()
@@ -1783,14 +1805,20 @@ class NetworkingGui(xbmcgui.WindowXMLDialog):
             log('CRDA and Kodi region matches or is None.')
             return
 
-        with open(self._crda_file, 'r', encoding='utf-8') as file_handle:
-            crda = file_handle.read()
+        if not os.path.isfile(self._crda_file):
+            crda = ''
+        else:
+            with open(self._crda_file, 'r', encoding='utf-8') as file_handle:
+                crda = file_handle.read()
 
         region = '' if not self.default_crda_region else self.default_crda_region
-        payload = crda.replace(
-            'REGDOMAIN=%s' % region,
-            'REGDOMAIN=%s' % self.kodi_region
-        )
+        if 'REGDOMAIN' in crda:
+            payload = crda.replace(
+                'REGDOMAIN=%s' % region,
+                'REGDOMAIN=%s' % self.kodi_region
+            )
+        else:
+            payload = 'REGDOMAIN=%s' % self.kodi_region
 
         if payload == crda:
             log('No modifications made to CRDA file.')

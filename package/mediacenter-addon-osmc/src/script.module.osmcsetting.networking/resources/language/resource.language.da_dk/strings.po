@@ -234,7 +234,7 @@ msgid "No"
 msgstr ""
 
 msgctxt "#32056"
-msgid "Pair with PIN"
+msgid "Pair and connect"
 msgstr ""
 
 msgctxt "#32057"
@@ -431,4 +431,8 @@ msgstr ""
 
 msgctxt "#32105"
 msgid "MyMusic"
+msgstr ""
+
+msgctxt "#32106"
+msgid "Unhandled Exception caught - See log for details"
 msgstr ""

@@ -5,19 +5,19 @@
 
 . ../common.sh
 
-if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "vero3" ]
+if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "vero3" ] || [ "$1" == "vero5" ]
 then
-pull_source "https://github.com/xbmc/xbmc/archive/f8fdeb6b1b1a7b753e1559d34a98cea62b4920d9.tar.gz" "$(pwd)/src"
-API_VERSION="19"
+pull_source "https://github.com/xbmc/xbmc/archive/5f418d0b133535c6675154688ac7144e34f4d436.tar.gz" "$(pwd)/src"
+API_VERSION="20"
 else
 pull_source "https://github.com/xbmc/xbmc/archive/master.tar.gz" "$(pwd)/kodi"
-API_VERSION="20"
+API_VERSION="21"
 fi
 if [ $? != 0 ]; then echo -e "Error fetching Kodi source" && exit 1; fi
 # Build in native environment
 BUILD_OPTS=$BUILD_OPTION_DEFAULTS
 BUILD_OPTS=$(($BUILD_OPTS - $BUILD_OPTION_USE_CCACHE))
-if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "vero3" ]
+if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ] || [ "$1" == "vero3" ] || [ "$1" == "vero5" ]
 then
     BUILD_OPTS=$(($BUILD_OPTS + $BUILD_OPTION_NEEDS_SWAP))
 fi
@@ -130,6 +130,17 @@ then
                 handle_dep "armv7-libsqlite-dev-osmc"
 		handle_dep "libamcodec-dev-osmc"
 	fi
+        if [ "$1" == "vero5" ]
+        then
+                handle_dep "vero5-libcec-dev-osmc"
+                handle_dep "vero5-userland-dev-osmc"
+                handle_dep "armv7-libshairplay-dev-osmc"
+                handle_dep "armv7-librtmp-dev-osmc"
+                handle_dep "armv7-libplatform-dev-osmc"
+                handle_dep "armv7-libbluray-dev-osmc"
+                handle_dep "armv7-libsqlite-dev-osmc"
+                handle_dep "libamcodec-dev-osmc"
+        fi
 	if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]
 	then
 		handle_dep "libdrm-dev"
@@ -153,8 +164,9 @@ then
 	then
 		install_patch "../../patches" "rbp"
 	fi
-	if [ "$1" == "rbp2" ] || [ "$1" == "vero3" ]; then install_patch "../../patches" "arm"; fi
+	if [ "$1" == "rbp2" ] || [ "$1" == "vero3" ] || [ "$1" == "vero5" ]; then install_patch "../../patches" "arm"; fi
 	test "$1" == vero3 && install_patch "../../patches" "vero3"
+	test "$1" == vero5 && install_patch "../../patches" "vero5"
 	mkdir kodi-build
 	pushd kodi-build
 	# Raspberry Pi Configuration
@@ -170,6 +182,10 @@ then
 	then
 		COMPFLAGS="-march=armv7-a -mfloat-abi=hard -O3 -marm -mfpu=neon -fomit-frame-pointer "
 	fi
+        if [ "$1" == "vero5" ]
+        then
+                COMPFLAGS="-march=armv7-a -mfloat-abi=hard -O3 -marm -mfpu=neon -fomit-frame-pointer "
+        fi
 	if [ "$1" == "rbp2" ] || [ "$1" == "rbp4" ]; then
 	# Check if we have headers for kernel 5.x
 	dpkg -l | grep rbp2-headers-sanitised | grep 5
@@ -213,6 +229,7 @@ then
 	    -DENABLE_VAAPI=OFF \
             -DENABLE_VDPAU=OFF \
             -DENABLE_INTERNAL_DAV1D=ON \
+            -DADDONS_CONFIGURE_AT_STARTUP=OFF \
         ../
 	fi
         if [ "$1" == "vero3" ]; then
@@ -253,7 +270,49 @@ then
 	    -DENABLE_SNDIO=OFF \
             -DENABLE_MARIADBCLIENT=ON \
             -DENABLE_INTERNAL_DAV1D=ON \
+            -DADDONS_CONFIGURE_AT_STARTUP=OFF \
 	../
+        fi
+        if [ "$1" == "vero5" ]; then
+        LIBRARY_PATH+="/opt/vero5/lib" && \
+        COMPFLAGS+="-I/opt/vero5/include -L/opt/vero5/lib -L/usr/osmc/lib -Wl,-rpath=/usr/osmc/lib" && \
+        export CFLAGS="${COMPFLAGS} ${CFLAGS}" && \
+        export CXXFLAGS="${COMPFLAGS} ${CFLAGS}" && \
+        export CPPFLAGS="${COMPFLAGS} ${CFLAGS}" && \
+        export LDFLAGS="-L/opt/vero5/lib" && \
+        cmake -DCMAKE_INSTALL_PREFIX=/usr \
+            -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+            -DCMAKE_PREFIX_PATH=/opt/vero5 \
+            -DCMAKE_INCLUDE_PATH=/opt/vero5/include \
+            -DCMAKE_LIBRARY_PATH=/usr/osmc/lib \
+            -DOPENGLES_gl_LIBRARY=/opt/vero5/lib \
+            -DENABLE_AML=ON \
+            -DAPP_RENDER_SYSTEM=gles \
+            -DASS_INCLUDE_DIR=/usr/osmc/lib \
+            -DAML_INCLUDE_DIR=/opt/vero5/include \
+            -DSHAIRPLAY_INCLUDE_DIR=/usr/osmc/include/shairplay/ \
+            -DENABLE_OPENGLES=ON \
+            -DENABLE_OPENGL=OFF \
+            -DENABLE_OPTICAL=1 \
+            -DENABLE_DVDCSS=1 \
+            -DWITH_ARCH=arm \
+            -DWITH_CPU="cortex-a53" \
+            -DCORE_PLATFORM_NAME=aml \
+            -DCORE_SYSTEM_NAME=linux \
+            -DENABLE_APP_AUTONAME=OFF \
+            -DENABLE_INTERNAL_FMT=OFF \
+            -DENABLE_INTERNAL_FLATBUFFERS=OFF \
+            -DENABLE_INTERNAL_SPDLOG=OFF \
+            -DENABLE_INTERNAL_UDFREAD=OFF \
+            -DENABLE_MDNS=OFF \
+            -DENABLE_BLUETOOTH=OFF \
+            -DENABLE_PULSEAUDIO=OFF \
+            -DENABLE_LCMS2=OFF \
+            -DENABLE_SNDIO=OFF \
+            -DENABLE_MARIADBCLIENT=ON \
+            -DENABLE_INTERNAL_DAV1D=ON \
+            -DADDONS_CONFIGURE_AT_STARTUP=OFF \
+        ../
         fi
 	if [ $? != 0 ]; then echo -e "Configure failed!" && exit 1; fi
 	$BUILD
@@ -269,7 +328,7 @@ then
         ADDONS_AUDIO_ENCODERS="audioencoder.flac audioencoder.lame audioencoder.vorbis audioencoder.wav"
         ADDONS_INPUTSTREAM="inputstream.adaptive inputstream.rtmp inputstream.ffmpegdirect"
 	ADDONS_PERIPHERAL="peripheral.xarcade peripheral.joystick"
-	ADDONS_PVR="pvr.argustv pvr.dvblink pvr.dvbviewer pvr.filmon pvr.freebox pvr.hdhomerun pvr.hts pvr.iptvsimple pvr.mediaportal.tvserver pvr.mythtv pvr.nextpvr pvr.njoy pvr.octonet pvr.pctv pvr.stalker pvr.teleboy pvr.vbox pvr.vdr.vnsi pvr.vuplus pvr.waipu pvr.wmc pvr.zattoo"
+	ADDONS_PVR="pvr.argustv pvr.dvblink pvr.dvbviewer pvr.filmon pvr.freebox pvr.hdhomerun pvr.hts pvr.iptvsimple pvr.mediaportal.tvserver pvr.mythtv pvr.nextpvr pvr.njoy pvr.octonet pvr.pctv pvr.sledovanitv.cz pvr.stalker pvr.teleboy pvr.vbox pvr.vdr.vnsi pvr.vuplus pvr.waipu pvr.wmc pvr.zattoo"
 	ADDONS_SCREENSAVERS="screensaver.asteroids screensaver.asterwave screensaver.biogenesis screensaver.cpblobs screensaver.greynetic screensaver.matrixtrails screensaver.pingpong screensaver.pyro screensaver.shadertoy"
 	ADDONS_VFS="vfs.libarchive vfs.rar vfs.sftp"
         ADDONS_VISUALIZATIONS="visualization.fishbmc visualization.goom visualization.matrix visualization.milkdrop visualization.milkdrop2 visualization.pictureit visualization.shadertoy visualization.spectrum visualization.starburst visualization.waveform"
@@ -297,6 +356,13 @@ then
            echo "set(OPENGLES_gl_LIBRARY /opt/vero3/lib)" >> ../Toolchain.mk
            echo "set(OPENGLES_INCLUDE_DIR /opt/vero3/include)" >> ../Toolchain.mk
 	fi
+        if [ "$1" == "vero5" ]
+        then
+           ADDONS_TO_BUILD="${ALL}"
+           echo "set(APP_RENDER_SYSTEM gles)" >> ../Toolchain.mk
+           echo "set(OPENGLES_gl_LIBRARY /opt/vero5/lib)" >> ../Toolchain.mk
+           echo "set(OPENGLES_INCLUDE_DIR /opt/vero5/include)" >> ../Toolchain.mk
+        fi
         cmake -DOVERRIDE_PATHS=1 -DCMAKE_INSTALL_PREFIX=${out}/usr/ -DBUILD_DIR=$(pwd) -DADDONS_TO_BUILD="${ADDONS_TO_BUILD}" -DCMAKE_TOOLCHAIN_FILE=../Toolchain.mk ../
         if [ $? != 0 ]; then echo "Configuring binary addons failed" && exit 1; fi
         cd ../
@@ -309,8 +375,8 @@ then
         # Languages
         mkdir languages/
         pushd languages
-        if [ "$API_VERSION" = "19" ]; then api_name="matrix"; fi
-	if [ "$API_VERSION" = "20" ]; then api_name="tbc"; fi
+        if [ "$API_VERSION" = "20" ]; then api_name="nexus"; fi
+	if [ "$API_VERSION" = "21" ]; then api_name="omega"; fi
 	base_url="http://mirror.ox.ac.uk/sites/xbmc.org/addons/${api_name}"
 	handle_dep "wget" # We do not usually use wget in the build environment
         languages=$(wget ${base_url} -O- | grep resource.language. | sed -e 's/<a/\n<a/g' | sed -e 's/<a .*href=['"'"'"]//' -e 's/["'"'"'].*$//' -e '/^$/ d' | sed '/tr/d' | sed 's/resource.language.//' | tr -d / | grep -v 'img src')
@@ -335,10 +401,11 @@ then
 	mkdir -p files-debug/usr/lib/kodi
 	cp -ar ${out}/usr/lib/kodi/kodi.bin files-debug/usr/lib/kodi/kodi.bin
 	strip -s ${out}/usr/lib/kodi/kodi.bin
-	COMMON_DEPENDS="niceprioritypolicy-osmc, mediacenter-send-osmc, libssh-4, libavahi-client3, python3, python-is-python3, python3-pil, python3-unidecode, libpython3.9, libsmbclient, samba-common-bin, libjpeg62-turbo, libsqlite3-0, libtinyxml2.6.2v5, libmad0, libmicrohttpd12, libyajl2, libmariadb3, libasound2, libxml2, liblzo2-2, libxslt1.1, libpng16-16, libsamplerate0, libtag1v5-vanilla, libfribidi0, libgif7, libcdio19, libpcrecpp0v5, libfreetype6, libvorbis0a, libvorbisenc2, libcurl4, libssl1.1, libplist3, avahi-daemon, policykit-1, mediacenter-addon-osmc (>= 3.0.39), mediacenter-skin-osmc, libcrossguid0, libcap2-bin, libfstrcmp0, libxkbcommon0, libinput10, xz-utils, libiso9660-11, libnss3, libnspr4, libnfs13, libass9, libunistring2, libatomic1, libfmt7, libudfread0"
+	COMMON_DEPENDS="niceprioritypolicy-osmc, mediacenter-send-osmc, libssh-4, libavahi-client3, python3, python-is-python3, python3-pil, python3-unidecode, libpython3.9, libsmbclient, samba-common-bin, libjpeg62-turbo, libsqlite3-0, libtinyxml2.6.2v5, libmad0, libmicrohttpd12, libyajl2, libmariadb3, libasound2, libxml2, liblzo2-2, libxslt1.1, libpng16-16, libsamplerate0, libtag1v5-vanilla, libfribidi0, libgif7, libcdio19, libpcrecpp0v5, libfreetype6, libvorbis0a, libvorbisenc2, libcurl4, libssl1.1, libplist3, avahi-daemon, policykit-1, mediacenter-addon-osmc (>= 3.0.39), mediacenter-skin-osmc, libcrossguid0, libcap2-bin, libfstrcmp0, libxkbcommon0, libinput10, xz-utils, libiso9660-11, libnss3, libnspr4, libnfs13, libass9, libunistring2, libatomic1, libfmt7, libudfread0, libspdlog1"
 	test "$1" == rbp2 && echo "Depends: ${COMMON_DEPENDS}, rbp2-libcec-osmc, armv7-librtmp-osmc, armv7-libshairplay-osmc, armv7-libbluray-osmc, armv7-libsqlite-osmc, rbp-userland-osmc, armv7-splash-osmc, rbp2-mesa-osmc, libdrm2, libglapi-mesa" >> files/DEBIAN/control
 	test "$1" == rbp4 && echo "Depends: ${COMMON_DEPENDS}, rbp2-libcec-osmc, armv7-librtmp-osmc, armv7-libshairplay-osmc, armv7-libbluray-osmc, armv7-libsqlite-osmc, rbp-userland-osmc, armv7-splash-osmc, rbp2-mesa-osmc, libdrm2, libglapi-mesa" >> files/DEBIAN/control
 	test "$1" == vero3 && echo "Depends: ${COMMON_DEPENDS}, vero3-libcec-osmc, armv7-librtmp-osmc, armv7-libshairplay-osmc, armv7-libbluray-osmc, armv7-libsqlite-osmc, vero3-userland-osmc, armv7-splash-osmc, libamcodec-osmc" >> files/DEBIAN/control
+        test "$1" == vero5 && echo "Depends: ${COMMON_DEPENDS}, vero5-libcec-osmc, armv7-librtmp-osmc, armv7-libshairplay-osmc, armv7-libbluray-osmc, armv7-libsqlite-osmc, vero5-userland-osmc, armv7-splash-osmc, libamcodec-osmc" >> files/DEBIAN/control
 	cp patches/${1}-watchdog ${out}/usr/bin/mediacenter
 	cp patches/${1}-advancedsettings.xml ${out}/usr/share/kodi/system/advancedsettings.xml
 	chmod +x ${out}/usr/bin/mediacenter

@@ -323,7 +323,7 @@ SETS = {
                 'name': 'System Journal',
                 'key': 'MyqVXi2x',
                 'ltyp': 'cl_log',
-                'actn': 'sudo journalctl -n 30000 --since "1 days ago"',
+                'actn': '/bin/bash -c "sudo journalctl --flush && sudo journalctl -n 30000 --since -24h"',
             },
         ],
     },
@@ -559,6 +559,23 @@ SETS = {
                 'ltyp': 'file_log',
                 'actn': '/home/osmc/.kodi/temp/kodi.old.log',
                 'mask': True
+            },
+        ],
+    },
+    'provision': {
+        'order': 22,
+        'active': False,
+        'help': 'OSMC Vero provisioning status',
+        'dest': 'provision',
+        'action': 'store_true',
+        'flags': ['-Y', '--provision'],
+        'logs': [
+            {
+                'name': 'provision',
+                'key': 've5xhi74',
+                'ltyp': 'cl_log',
+                'actn': '/opt/securevero/secureos/bin/tee_osmc -d',
+                'hwid': 'vero5',
             },
         ],
     },

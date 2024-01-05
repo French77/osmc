@@ -26,8 +26,8 @@ fi
 . ../common.sh
 test $1 == rbp2 && VERSION="5.15.92" && REV="1" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
 test $1 == rbp464 && VERSION="5.15.92" && REV="1" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD + $INITRAMFS_EMBED)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == vero364 && VERSION="4.9.269" && REV="33" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
-test $1 == vero564 && VERSION="4.9.269" && REV="35" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=1
+test $1 == vero364 && VERSION="4.9.269" && REV="42" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=0
+test $1 == vero564 && VERSION="4.9.269" && REV="48" && FLAGS_INITRAMFS=$(($INITRAMFS_BUILD)) && IMG_TYPE="zImage" && SIGN_KERNEL=1
 if [ $1 == "rbp2" ] || [ $1 == "rbp464" ]
 then
 	if [ -z $VERSION ]; then echo "Don't have a defined kernel version for this target!" && exit 1; fi
@@ -197,8 +197,8 @@ then
 	# Fix symbolic links 2) add source and build symbolic links to appropriate packages
 	mkdir -p ../../files-headers/lib/modules/${VERSION}-${REV}-osmc
 	mkdir -p ../../files-source/lib/modules/${VERSION}-${REV}-osmc
-	ln -s /usr/src/${1}-headers-${VERSION}-${REV}-osmc ../../files-headers/lib/modules/${VERSION}-${REV}-osmc/build
-	ln -s /usr/src/${1}-source-${VERSION}-${REV}-osmc ../../files-source/lib/modules/${VERSION}-${REV}-osmc/source
+	ln -sf /usr/src/${1}-headers-${VERSION}-${REV}-osmc ../../files-headers/lib/modules/${VERSION}-${REV}-osmc/build
+	ln -sf /usr/src/${1}-source-${VERSION}-${REV}-osmc ../../files-source/lib/modules/${VERSION}-${REV}-osmc/source
 	if [ $? != 0 ]; then echo "Building kernel headers failed" && exit 1; fi
 	# Install sanitised headers in to sanitised headers package
 	mkdir -p ../../files-headers/usr/src/${1}-headers-sanitised-${VERSION}-${REV}-osmc/

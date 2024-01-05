@@ -1,8 +1,8 @@
 # OSMC Kodi Media Center language file
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2022-10-21 12:22+0000\n"
-"Last-Translator: Joakim Sandstrom <translator-1@contribute-osmc.com>\n"
+"PO-Revision-Date: 2023-11-24 11:26+0000\n"
+"Last-Translator: Julian Michel <admin.weblate@contribute-osmc.com>\n"
 "Language-Team: Swedish <http://translate.osmc.tv/projects/osmc/kodi-strings/sv_se/>\n"
 "Language: sv_se\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -40,7 +40,7 @@ msgstr "Tvinga 422"
 
 msgctxt "#13137"
 msgid "Display maximum luminance"
-msgstr "Skärmens maximala luminans"
+msgstr "Skärmens maximal luminans"
 
 msgctxt "#13438"
 msgid "Allow hardware acceleration"
@@ -70,6 +70,34 @@ msgctxt "#34215"
 msgid "BT2020SDR"
 msgstr ""
 
+msgctxt "#34216"
+msgid "Set this to your TV's HDR capability to force output of HDR streams as HDR. May help if your TV supports HDR but your AVR does not."
+msgstr ""
+
+msgctxt "#34217"
+msgid "Manually set a display's HDR support"
+msgstr ""
+
+msgctxt "#34218"
+msgid "Auto (follow EDID)"
+msgstr ""
+
+msgctxt "#34219"
+msgid "HDR10 only"
+msgstr ""
+
+msgctxt "#34230"
+msgid "HDR10 and HLG"
+msgstr ""
+
+msgctxt "#34231"
+msgid "HDR10 and HDR10+"
+msgstr ""
+
+msgctxt "#34232"
+msgid "HDR10, HLG and HDR10+"
+msgstr ""
+
 #. Description of setting with label #13438 "Allow hardware acceleration (amcodec)"
 msgctxt "#36439"
 msgid "Enable hardware video decode using Amlogic decoder."
@@ -89,11 +117,11 @@ msgstr ""
 
 msgctxt "#36643"
 msgid "Mitigate MTU issues with SMBv2"
-msgstr ""
+msgstr "Dämpa MTU problem i SMBv2"
 
 msgctxt "#36644"
 msgid "Enabling this option can resolve some connectivity issues when connecting via SMBv2, however doing so will reduce throughput regardless of SMB version"
-msgstr ""
+msgstr "Aktivering av detta val kan lösa vissa anslutnings problem via SMBv2, men det kommer reducera hastigheten oavsett SMB version"
 
 msgctxt "#38007"
 msgid "Boost centre channel when downmixing"

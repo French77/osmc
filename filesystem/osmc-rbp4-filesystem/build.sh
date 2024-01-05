@@ -82,6 +82,9 @@ verify_action
 # We have SSH separate so we can remove it later via App Store
 chroot ${DIR} apt-get -y install --no-install-recommends ssh-app-osmc
 verify_action
+# We have cron separate so we can remove it later via App Store
+chroot ${DIR} apt-get -y install --no-install-recommends cron-app-osmc
+verify_action
 # Ensure we have usr directory symlinks even if we use old debootstrap
 chroot ${DIR} apt-get -y install --no-install-recommends usrmerge
 verify_action
@@ -115,6 +118,9 @@ set_iptables_to_legacy ${DIR}
 verify_action
 echo -e "       * Adding system release information"
 add_rls_info ${DIR}
+verify_action
+echo -e "       * Disabling persistent journalling"
+disable_persistent_journal ${DIR}
 verify_action
 
 # Perform filesystem cleanup

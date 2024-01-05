@@ -5,7 +5,7 @@
 
 . ../common.sh
 
-pull_source "ftp://ftp.videolan.org/pub/videolan/libbluray/1.0.2/libbluray-1.0.2.tar.bz2" "$(pwd)/src"
+pull_source "ftp://ftp.videolan.org/pub/videolan/libbluray/1.3.4/libbluray-1.3.4.tar.bz2" "$(pwd)/src"
 if [ $? != 0 ]; then echo -e "Error downloading" && exit 1; fi
 # Build in native environment
 build_in_env "${1}" $(pwd) "libbluray-osmc"
@@ -35,11 +35,14 @@ then
 	handle_dep "autoconf"
         handle_dep "automake"
 	handle_dep "libtool"
+	handle_dep "default-jdk"
+	handle_dep "ant"
+	handle_dep "libudfread-dev"
 	echo "Package: ${1}-libbluray-osmc" >> files/DEBIAN/control && echo "Package: ${1}-libbluray-dev-osmc" >> files-dev/DEBIAN/control
 	pushd src/libbluray-*
 	install_patch "../../patches" "all"
 	autoreconf -vif .
-	./configure --prefix=/usr/osmc --disable-bdjava-jar --with-freetype --with-fontconfig --with-libxml2 --disable-examples
+	./configure --prefix=/usr/osmc --enable-bdjava-jar --with-freetype --with-fontconfig --with-libxml2 --disable-examples
 	$BUILD
 	make install DESTDIR=${out}
 	if [ $? != 0 ]; then echo "Error occured during build" && exit 1; fi

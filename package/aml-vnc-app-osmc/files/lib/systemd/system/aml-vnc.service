@@ -1,0 +1,15 @@
+[Unit]
+Description = VNC Server
+After = network-online.target
+
+[Service]
+Type = simple
+EnvironmentFile = /etc/osmc/prefs.d/aml-vnc.conf
+ExecStartPre = /bin/sleep 5
+ExecStart = /usr/bin/aml-vnc
+TimeoutStopSec = 20
+Restart = always
+RestartSec = 0
+
+[Install]
+WantedBy = multi-user.target

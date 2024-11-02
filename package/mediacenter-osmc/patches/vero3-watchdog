@@ -33,6 +33,11 @@ if [ "$1" = "stop" ]; then
 	exit
 fi
 
+# look for custom edid
+if [ -f /lib/firmware/edid ]; then
+    echo load /lib/firmware/edid > /sys/class/amhdmitx/amhdmitx0/edid
+fi
+
 syspaths="/sys/class/video/
 /sys/class/tsync/pts_pcrscr
 /sys/class/tsync/enable
@@ -71,6 +76,8 @@ syspaths="/sys/class/video/
 /sys/module/amvideo/parameters/framepacking_width
 /sys/module/amvideo/parameters/framepacking_height
 /sys/module/amvideo/parameters/framepacking_blank
+/sys/class/amhdmitx/amhdmitx0/force_hdr
+/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 "
 
 for syspath in $syspaths; do

@@ -323,7 +323,7 @@ SETS = {
                 'name': 'System Journal',
                 'key': 'MyqVXi2x',
                 'ltyp': 'cl_log',
-                'actn': '/bin/bash -c "sudo journalctl --flush && sudo journalctl -n 30000 --since -24h"',
+                'actn': '/bin/bash -c "sudo journalctl --flush && sudo journalctl -n 30000 -o short-precise --since -24h"',
             },
         ],
     },
@@ -497,6 +497,14 @@ SETS = {
                 'actn': '/sys/class/amhdmitx/amhdmitx0/edid',
                 'hwid': '!rbp',
             },
+            {
+                'name': 'Dolby Vision Cap',
+                'key': 'wR0bk595',
+                'ltyp': 'file_log',
+                'actn': '/sys/class/amhdmitx/amhdmitx0/dv_cap',
+                'hwid': '!rbp',
+            },
+
             {
                 'name': 'Audio Cap',
                 'key': 'k3dRrf31',

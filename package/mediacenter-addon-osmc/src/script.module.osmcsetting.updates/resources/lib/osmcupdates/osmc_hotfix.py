@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-    Copyright (C) 2014-2020 OSMC (KodeKarnage)
+    Copyright (C) 2014-2026 OSMC (KodeKarnage)
 
     This file is part of script.module.osmcsetting.updates
 
     SPDX-License-Identifier: GPL-2.0-or-later
     See LICENSES/GPL-2.0-or-later for more information.
+
+    Kodi front end for the HotFix mechanism. Everything that does not need a GUI
+    lives in osmc_hotfix_core, which /usr/bin/osmc-hotfix shares, so the two
+    front ends cannot drift in what they fetch, parse or run.
 """
 
 import os
-import re
-import shlex
-import subprocess
-import traceback
-from io import open
+import socket
 
-import requests
-
+import xbmc
 import xbmcaddon
 import xbmcgui
 from osmccommon.osmc_language import LangRetriever
 from osmccommon.osmc_logging import StandardLogger
+
+try:
+    from .osmc_hotfix_core import HotFixCore
+except ImportError:  # run directly by RunScript, so not inside the package
+    from osmc_hotfix_core import HotFixCore
 
 ADDON_ID = 'script.module.osmcsetting.updates'
 DIALOG = xbmcgui.Dialog()
@@ -34,33 +38,52 @@ class HotFix(object):
         self._addon = addon
         self._lang = None
 
-        self.tmp_hfo_location = '/var/tmp/uploadHotFixOutput.txt'
-
-        # hf_key = 'ucawobahij'  # https://discourse.osmc.tv/t/kodi-v19-troubleshooting-faq/89968
+        self.core = HotFixCore(log=log)
 
         hf_key = self.user_enters_key()
-        # hf_cypher = self.convert_key_to_cypher(hf_key)
 
-        hf_from_mirror = True
-        hf_raw_text = self.retrieve_mirror_hotfix(hf_key)
-        if not hf_raw_text:
-            hf_from_mirror = False
-            hf_raw_text = self.retrieve_paste_hotfix(hf_key)
+        # the input dialog returns '' when the user cancels it, which is not a
+        # mistake to report back to them
+        if not hf_key.strip():
+            return
 
-        hf_parsed = self.parse_hotfix(hf_raw_text)
-        user_confirmation = self.confirm_instruction(mirror=hf_from_mirror)
+        hf_raw_text, source, url = self.core.retrieve(hf_key)
 
+        # Both of these were only guarded in /usr/bin/osmc-hotfix. Without them
+        # an ID that names nothing ran the whole sequence against an empty
+        # instruction list: display_instruction() returned early so no commands
+        # were shown, the trust question was still asked, apply([]) reported no
+        # failure, and report_outcome() then said the HotFix had completed
+        # successfully -- telling the user something had been done when nothing
+        # had. Reported by a tester, who entered '11'.
+        if not hf_raw_text.strip():
+            _ = DIALOG.ok(self.lang(32206), self.lang(32207))
+            return
+
+        hf_parsed = self.core.parse(hf_raw_text)
+
+        if not hf_parsed['instruction']:
+            _ = DIALOG.ok(self.lang(32208), self.lang(32209))
+            return
+
+        # show the user what this HotFix is and what it will run BEFORE asking
+        # them to agree to it -- previously consent was requested first and the
+        # two display methods were unimplemented stubs, so the dialog described
+        # nothing at all
         self.display_description(hf_parsed['description'])
         self.display_instruction(hf_parsed['instruction'])
 
-        if not user_confirmation:
+        if not self.confirm_instruction(description=hf_parsed['description'],
+                                        mirror=source == HotFixCore.SOURCE_MIRROR):
             return
 
-        results = self.apply_instruction(hf_parsed['instruction'])
+        results, failed_line = self.core.apply(hf_parsed['instruction'])
 
-        self.save_temp_hotfix_output(results)
+        self.core.save_output(results)
 
-        self.resolution_dispatcher(results, hf_parsed['resolution'])
+        extra = self.resolution_dispatcher(results, hf_parsed['resolution'])
+
+        self.report_outcome(failed_line, extra)
 
     @property
     def addon(self):
@@ -76,195 +99,163 @@ class HotFix(object):
 
     def user_enters_key(self):
         """
-            Provides a dialog through which the user enters a 5-digit key code
+            Provides a dialog through which the user enters a key code
         """
-        # DEFAULT VALUE ONLY USED FOR TESTING
         hf_key = DIALOG.input(self.lang(32115), '', type=xbmcgui.INPUT_ALPHANUM)
         log(label='User entered hotfix ID', message=hf_key)
 
         return hf_key
 
-    @staticmethod
-    def convert_key_to_cypher(hf_key):
-        """
-            Takes a 5-digit key code and converts it to the cypher used in retrieving
-            the HotFix from paste.osmc.io
-            *** YET TO BE IMPLEMENTED
-        """
-        return hf_key
-
-    @staticmethod
-    def retrieve_mirror_hotfix(hf_cypher):
-        """
-            Takes a five-digit hotfix key and retrieve the hotfix from https://download.osmc.tv/hotfixes/.
-            Returns the raw contents at that location as a string.
-        """
-
-        url = 'https://download.osmc.tv/hotfixes/'
-        log(label='Retrieving hotfixes from', message=url)
-
-        raw_result = requests.get(url)
-        raw_text = raw_result.text
-
-        result = re.findall(r'<img.+?>\s*<a href.+?>(.+?)</a>', raw_text)
-        hotfixes = []
-        for filename in result:
-            if filename not in ['Name', 'Parent Directory']:
-                hotfixes.append(filename)
-
-        raw_text = ''
-        if hf_cypher in hotfixes:
-            raw_result = requests.get(url + hf_cypher)
-            raw_text = raw_result.text
-
-        log(label='Mirror HotFix Result', message=raw_text)
-
-        return raw_text
-
-    @staticmethod
-    def retrieve_paste_hotfix(hf_cypher):
-        """
-            Takes a five-digit hotfix key and retrieve the hotfix from paste.osmc.io.
-            Returns the raw contents at that location as a string.
-        """
-        url = 'https://paste.osmc.tv/raw/%s' % hf_cypher
-        log(label='Retrieving hotfix from', message=url)
-
-        raw_result = requests.get(url)
-        raw_text = raw_result.text
-
-        log(label='Pastebin HotFix Result', message=raw_text)
-        return raw_text
-
-    @staticmethod
-    def parse_hotfix(hf_result):
-        """
-            Takes the raw string from the paste.osmc.io location and parses it.
-            Returns a dictionary with the DESCRIPTION of the hotfix, the INSTRUCTION
-            (what is run on the command line) and the RESOLUTION as a list
-            (the actions to take after the INSTRUCTION is run).
-
-            The structure of the file is as follows:
-
-                DESCRIPTION (optional):
-                    - one line string only
-                    - must start with "DESCRIPTION:", otherwise treated as part of the INSTRUCTION
-
-                INSTRUCTION:
-                    - can be multiple lines
-                    - multiple lines will be run consecutively only if the exit code is 0
-                    - can start with "INSTRUCTION:" but not required
-
-                RESOLUTION (optional):
-                    - one line string with resolution actions
-                    - can be comma, space, bar, colon, or semi-colon delimited
-                    - must be the last line in the result
-                    - and must start with "RESOLUTION:", otherwise it will be treated as part of
-                      the INSTRUCTION SET
-                    - UPLOAD: upload the results of the INSTRUCTION to paste.osmc.io and provide
-                      the user with the link
-                    - SAVE: to save the results to a specific file
-                    - LOG: write the results to the kodi log
-                    - LOG is a mandatory RESOLUTION and is done every time by default
-             """
-
-        description = 'No description available'
-        instruction = []
-        resolution = []
-
-        delimiters = [' ', ',', '.', '|', ':', ':']
-
-        result_list = hf_result.split('\n')
-
-        for i, line in enumerate(result_list):
-            if i == 0:
-                if line.startswith('DESCRIPTION:'):
-                    description = line.replace('DESCRIPTION:', '').strip()
-                    continue
-
-            if i == len(result_list) - 1:
-                if line.startswith('RESOLUTION:'):
-                    desc = line.replace('RESOLUTION:', '').strip()
-                    for d in delimiters:
-                        if d in desc:
-                            resolution = desc.split(d)
-                            break
-                    continue
-
-            if line:
-                instruction.append(line.replace('INSTRUCTION:', '').strip())
-
-        log(label='Description', message=description)
-        log(label='Instruction', message=instruction)
-        log(label='Resolution', message=resolution)
-
-        hf_parsed = {
-            'description': description,
-            'instruction': instruction,
-            'resolution': resolution
-        }
-
-        return hf_parsed
-
     def display_description(self, description):
         """
-            Displays a description of the hotfix on-screen for the user
-            *** YET TO BE IMPLEMENTED
+            Displays a description of the hotfix on-screen for the user.
+
+            Kept separate from the confirmation dialog so the description is
+            logged and normalised in one place; confirm_instruction() puts it in
+            front of the user as part of the question it asks.
         """
+        if not description:
+            description = self.lang(32195)
+
+        log(label='Displaying description', message=description)
+
+        return description
 
     def display_instruction(self, instruction):
         """
-            Displays the specific instructions on-screen for the user
-            *** YET TO BE IMPLEMENTED
-        """
+            Displays the specific instructions on-screen for the user.
 
-    def confirm_instruction(self, mirror=False):
+            A HotFix runs arbitrary commands as root, so the user is shown
+            exactly what will run before being asked to agree to it. A text
+            viewer is used rather than a yes/no dialog because command lines are
+            long and there may be several of them.
+        """
+        if not instruction:
+            return
+
+        numbered = '[CR]'.join('%d. %s' % (n, line)
+                               for n, line in enumerate(instruction, start=1))
+
+        # The trailing hint is not decoration. CGUIDialogTextViewer::OnAction
+        # handles only ACTION_TOGGLE_FONT and defers the rest to CGUIDialog, so
+        # the dialog itself closes on Back and nothing else; any other key that
+        # works comes from the skin. OSMC's own skin.osmc DialogTextViewer.xml
+        # has no button at all -- group, label, textbox, scrollbar -- so on the
+        # default skin Back is the only way out, which is why the hint names
+        # that and not OK. Estuary does provide a close button, so OK works
+        # there too, but naming it would be wrong for most devices.
+        #
+        # The wording avoids "continue": a tester pointed out that it could be
+        # read as agreeing to run the HotFix, which is exactly the opposite of
+        # what this screen is for.
+        DIALOG.textviewer(self.lang(32194),
+                          numbered + '[CR][CR]' + self.lang(32205))
+
+    def confirm_instruction(self, description=None, mirror=False):
         """
             Asks the user to confirm that they wish to apply the instruction.
             Returns TRUE, only if user clicks Yes.
+
+            A HotFix that did not come from OSMC's own mirror gets an extra
+            warning: anyone can post to paste.osmc.tv without authenticating, so
+            the provenance is worth saying out loud.
         """
         strings = [self.lang(32117), self.lang(32118), self.lang(32119)]
         if mirror:
             strings = [self.lang(32117), self.lang(32119)]
 
+        # lead with what this HotFix claims to do, so the question has context
+        if description:
+            strings = [description, ''] + strings
+
         user_confirmation = DIALOG.yesno(self.lang(32116), '[CR]'.join(strings))
 
         return user_confirmation
 
-    @staticmethod
-    def apply_instruction(instruction):
+    def report_outcome(self, failed_line=None, extra=None):
         """
-            Applies the instruction via the command line.
-            Returns the resulting output in a list of lines.
+            Tell the user whether the HotFix worked.
+
+            Nothing was shown before: the dialog closed and the user was left to
+            guess whether anything had happened, which is the most common
+            complaint about the HotFix mechanism. A HotFix is applied by someone
+            sitting in front of the device, so the answer belongs on screen
+            rather than only in the Kodi log.
+
+            extra is whatever the resolutions want to add -- in practice the
+            paste URL. It goes in this dialog rather than one of its own so the
+            user dismisses a single screen that both states the outcome and
+            carries the detail, outcome first.
         """
-        dangerous = ['rm -rf /', ]
-        results = []
-        for line in instruction:
-            try:
-                instruct = shlex.split(line)
-                results.append('>>>>> INSTRUCTION >>>>> %s\n' % ' '.join(instruct))
+        extra = extra or []
 
-                try:
-                    output = subprocess.check_output(instruct)
-                    if isinstance(output, bytes):
-                        output = output.decode('utf-8')
-                    results.append(output)
+        if failed_line is not None:
+            log(label='HotFix stopped on line', message=failed_line)
 
-                except subprocess.CalledProcessError as e:
-                    # raise RuntimeError("command '{}' return with error (code {}): {}"
-                    # .format(e.cmd, e.returncode, e.output))
-                    log(label='Non-zero exit code from line', message=e.output)
-                    output = e.output
-                    if isinstance(output, bytes):
-                        output = output.decode('utf-8')
-                    results.append(output)
-                    break
+            body = [self.lang(32199), failed_line, self.lang(32200)]
+            if extra:
+                body += [''] + extra
 
-            except Exception as e:
-                results.append('Error: %s\n%s' % (str(e), traceback.format_exc()))
-                break
+            # 32203 and 32204 both tell the user to upload the Kodi log, so
+            # only one of them appears. A failed upload has already said it.
+            if self.lang(32203) not in extra:
+                body += ['', self.lang(32204)]
 
-        return results
+            _ = DIALOG.ok(self.lang(32197), '[CR]'.join(body))
+            return False
+
+        log('HotFix completed: every instruction returned zero')
+
+        body = [self.lang(32198)]
+        if extra:
+            body += [''] + extra
+
+        _ = DIALOG.ok(self.lang(32196), '[CR]'.join(body))
+
+        self.offer_reboot()
+
+        return True
+
+    def offer_reboot(self):
+        """
+            A HotFix that needs a restart says so by touching the core's reboot
+            flag, rather than calling reboot itself. Two reasons: a HotFix that
+            reboots directly kills its own remaining commands and the reporting
+            that follows them, and deciding at run time lets a HotFix ask for a
+            restart only when it actually changed something that needs one -- a
+            fixed header field could not.
+
+            The user is asked rather than counted down. These devices run
+            recordings and are used by people other than whoever applied the
+            HotFix, so a timer that fires into an empty room is worse than a
+            prompt that waits.
+        """
+        if not self.core.reboot_requested():
+            return False
+
+        self.core.clear_reboot_request()
+
+        reboot = DIALOG.yesno(self.lang(32201),
+                              '[CR]'.join([self.lang(32202), self.lang(32080)]),
+                              yeslabel=self.lang(32081), nolabel=self.lang(32082))
+
+        if not reboot:
+            self.core.defer_reboot()
+            return False
+
+        # close the settings addon first, exactly as the updater does before a
+        # reboot, so it is not torn down mid-write
+        try:
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as open_socket:
+                open_socket.connect('/var/tmp/osmc.settings.sockfile')
+                open_socket.sendall(b'exit')
+        except Exception as e:
+            log(label='Could not signal settings addon to exit', message=str(e))
+
+        xbmc.sleep(1000)
+        xbmc.executebuiltin('Reboot')
+
+        return True
 
     def resolution_dispatcher(self, results, resolutions=None):
         """
@@ -274,66 +265,61 @@ class HotFix(object):
         if resolutions is None:
             resolutions = []
 
+        # SAVE, which copied the output to /boot, is deliberately absent. On a
+        # Raspberry Pi /boot is the small FAT partition the device boots from;
+        # writing arbitrary command output there risks filling or corrupting it.
+        # Nothing is lost by not writing there: LOG is always applied, and it
+        # puts the output in the Kodi log, which grab-logs does collect. The
+        # core's own output file is not collected by grab-logs -- it is there so
+        # the user still has the output locally, including after a restart the
+        # HotFix itself asked for.
         resolution_map = {
             'UPLOAD': self.resolution_upload,
-            'SAVE': self.resolution_save,
             'LOG': self.resolution_log,
         }
 
         if 'LOG' not in resolutions:
             resolutions.append('LOG')
 
+        # Resolutions return lines to show rather than opening dialogs of their
+        # own. A tester found the old arrangement back to front: the upload
+        # dialog with the paste URL appeared first and had to be dismissed
+        # before "HotFix complete" appeared behind it, so the result of the
+        # HotFix was announced after a detail about it, in two dismissals.
+        lines = []
+
         for resolution in resolutions:
             func = resolution_map.get(resolution, self.missing_resolution)
-            func(results)
+            reported = func(results)
+            if reported:
+                lines.extend(reported)
+
+        return lines
 
     @staticmethod
     def missing_resolution(results):
         """
-            Method that is run when the dispatcher receives a resolution it doesnt understand
+            Method that is run when the dispatcher receives a resolution it
+            doesnt understand
         """
         log('Unknown request received by dispatcher.')
 
     def resolution_upload(self, results):
         """
-            Uploads the results stored in the temporary file to paste.osmc.io and
-            provide the user with the URL
+            Uploads the collected output to paste.osmc.tv and gives the user the
+            URL, which is what they should quote on the forum.
         """
-        with os.popen('curl -X POST -s -T "%s" https://paste.osmc.tv/documents' %
-                      self.tmp_hfo_location) as open_file:
-            line = open_file.readline()
-            key = line.replace('{"key":"', '').replace('"}', '').replace('\n', '')
-            log('pastio line: %s' % repr(line))
+        url = self.core.upload_output()
 
-        if not key:
-            log("OSMC HotFix upload failed.")
-            save = DIALOG.yesno(self.lang(32120),
-                                '[CR]'.join([self.lang(32121), self.lang(32122)]))
+        if not url:
+            # Previously this offered to copy the output to /boot. It no longer
+            # does: an upload failure means no network, and a device with no
+            # network could not have fetched the HotFix in the first place, so
+            # the case is close to unreachable and not worth writing to the boot
+            # partition for. Say where the output already is instead.
+            return [self.lang(32121), self.lang(32203)]
 
-            if save:
-                self.resolution_save(results=None)
-
-        else:
-            url = 'https://paste.osmc.tv/ %s' % key
-            log(label="HotFix output uploaded to", message=url.replace(' ', ''))
-            _ = DIALOG.ok(self.lang(32120), '[CR]'.join([self.lang(32123), "URL: %s" % url]))
-
-    def save_temp_hotfix_output(self, results):
-        """
-            Saves the hotfix output to a temporary file
-        """
-        if isinstance(results, bytes):
-            results = results.decode('utf-8')
-
-        with open(self.tmp_hfo_location, 'w', encoding='utf-8') as f:
-            f.writelines(results)
-
-    def resolution_save(self, results):
-        """
-            Save the results to a file at the SD card
-        """
-        log('Copying HotFix output to /boot/')
-        os.popen('sudo cp -rf %s /boot/' % self.tmp_hfo_location)
+        return [self.lang(32123), "URL: %s" % url]
 
     @staticmethod
     def resolution_log(results):

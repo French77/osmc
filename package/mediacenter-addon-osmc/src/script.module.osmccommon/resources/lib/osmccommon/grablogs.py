@@ -95,6 +95,13 @@ SETS = {
                 'actn': '/proc/cmdline',
             },
             {
+                'name': 'boot cmdline',
+                'key': 'bCmDlN05',
+                'ltyp': 'file_log',
+                'actn': '/boot/cmdline.txt',
+                'hwid': 'vero5',
+            },
+            {
                 'name': 'Debian version',
                 'key': 'm4ls932a',
                 'ltyp': 'file_log',
@@ -583,6 +590,31 @@ SETS = {
                 'key': 've5xhi74',
                 'ltyp': 'cl_log',
                 'actn': '/opt/securevero/secureos/bin/tee_osmc -d',
+                'hwid': 'vero5',
+            },
+        ],
+    },
+
+    'ramoops': {
+        'order': 23,
+        'active': False,
+        'help': 'Ramoops (persistent storage crash logs)',
+        'dest': 'ramoops',
+        'action': 'store_true',
+        'flags': ['-R', '--ramoops'],
+        'logs': [
+            {
+                'name': 'pstore listing',
+                'key': 'pSt0rEls',
+                'ltyp': 'cl_log',
+                'actn': 'ls -la /var/lib/systemd/pstore/',
+                'hwid': 'vero5',
+            },
+            {
+                'name': 'ramoops content',
+                'key': 'rAmOoPs5',
+                'ltyp': 'cl_log',
+                'actn': 'bash -c "for f in /var/lib/systemd/pstore/*; do [ -f \\"$f\\" ] && { echo \\"--- $f ---\\"; cat \\"$f\\"; echo; }; done"',
                 'hwid': 'vero5',
             },
         ],
